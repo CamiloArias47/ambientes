@@ -16,6 +16,12 @@ Route::get('servicios-ambientales', function () {return view('servicios'); });
 Route::get('empresa', function(){return view('empresa'); });
 Route::get('productos', function(){return view('productos'); });
 
+Route::get('intranet', 'Auth\LoginController@ShowLoginForm')->name('intranet');
+
+Route::post('login', 'Auth\LoginController@login')->name('login');
+Route::post('logout', 'Auth\LoginController@logout')->name('logout');
+Route::get('dashboard', 'DashboardController@index')->name('dashboard');
+
 //___________________________Ecommerce___________________________________
   Route::group(["prefix"=>"ecotienda"],function(){
     Route::get('/',                       'ShopController@index')->name('shop');//Retorna a la página principal
