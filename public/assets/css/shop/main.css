@@ -1,0 +1,596 @@
+/*Importando hojas de estilo*/
+@import 'normalize.css';
+@import 'material-design-iconic-font.min.css';
+@import url('https://fonts.googleapis.com/css?family=Noto+Sans');
+@import url('https://fonts.googleapis.com/css?family=Poiret+One');
+
+/*Tipografia*/
+@font-face{
+    /*font-family: "Tittles";*/
+    src: url("../fonts/goodtime.ttf"),
+    url("../fonts/goodtime.eot"),
+    url("../fonts/goodtime.woff"),
+    url("../fonts/goodtime.woff2"),
+    url("../fonts/goodtime.svg");
+}
+@font-face{
+    /*font-family: "Text";*/
+    src: url("../fonts/sourcesanspro.ttf"),
+    url("../fonts/sourcesanspro.eot"),
+    url("../fonts/sourcesanspro.woff"),
+    url("../fonts/sourcesanspro.woff2"),
+    url("../fonts/sourcesanspro.svg");
+}
+/*=====================================================
+					Estilos generales
+======================================================*/
+
+	body,
+	html{
+		font-family: 'Noto Sans', sans-serif;
+		margin: 0;
+		padding: 0;
+		font-size: 16px;
+		position: relative;
+		width: 100%;
+		height: 100%;
+		background-color: transparent;
+	}
+
+	 header,main, footer{
+	      padding-left: 300px;
+
+	}
+
+	@media only screen and (max-width : 992px) {
+	header, main, footer {
+	    padding-left: 0;
+	  }
+	}
+
+
+
+	@media only screen and (min-width : 992px) {
+		#topNav{
+		    display: none;
+		}
+	}
+
+	.nav-wrapper{
+		padding-left: 400px;
+	}
+
+	@media only screen and (max-width : 992px) {
+		.nav-wrapper {
+		    padding-left: 0;
+	  	}
+	}
+
+	.full{
+		margin: 0;
+		padding: 0;
+		width: 100%;
+	}
+
+	.tittles{
+		font-family: 'Poiret One', cursive;
+		color: #414449;
+
+	}
+
+	.text-big{
+	 font-size: 1.5rem;
+	}
+
+	.rem1-5{
+		font-size: 1.5rem;
+	}
+
+	.cover{
+		background-size: cover;
+		background-attachment: fixed;
+		background-repeat: no-repeat;
+		background-position: center center;
+		background-color: #fff;
+	}
+
+	.center-box{
+		margin: 0 auto !important;
+		display: block;
+	}
+
+	.figure{
+		padding: 0;
+		margin: 0;
+	}
+
+	.card .card-image .card-title{
+		width: 100%;
+		background-color: rgba(0,0,0,.5);
+		padding: 9px;
+	}
+
+/*===========Social Bar==========*/
+
+	html {
+	font-size: 16px;
+	}
+
+	.social-bar {
+		position: fixed;
+		right: 0;
+		top: 35%;
+		font-size: 1.5rem;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		z-index: 100;
+	}
+
+	.icon {
+		color: white;
+		text-decoration: none;
+		padding: .7rem;
+		display: flex;
+		transition: all .5s;
+	}
+
+	.icon-facebook2 {
+		background: #2E406E;
+	}
+
+	.icon-youtube {
+		background: #E83028;
+	}
+
+	.icon-instagram {
+		background: #D61045;
+	}
+
+	.icon-table{
+		background: #CEF6E3;
+	}
+
+	.icon:first-child {
+		border-radius: 1rem 0 0 0;
+	}
+
+	.icon:last-child {
+		border-radius: 0 0 0 1rem;
+	}
+
+	.icon:hover {
+		padding-right: 4rem;
+		border-radius: 1rem 0 0 1rem;
+		box-shadow: 0 0 .5rem rgba(0, 0, 0, 0.42);
+	}
+
+
+
+/*========Busqueda==========*/
+
+	.search .search-wrapper {
+	    margin: 0 12px;
+	    -webkit-transition: margin .25s ease;
+	    transition: margin .25s ease;
+	}
+
+	li.search{
+	    background-color: #fff;
+	}
+
+	li.search:hover {
+	    background-color: #fff;
+	}
+
+	li.search .search-wrapper input#search {
+	    display: block;
+	    font-size: 16px;
+	    font-weight: 300;
+	    width: 100%;
+	    height: 45px;
+	    margin: 0;
+	    -webkit-box-sizing: border-box;
+	    box-sizing: border-box;
+	    padding: 0 45px 0 15px;
+	    border: 0;
+	}
+
+	li.search .search-wrapper i.material-icons {
+	    position: absolute;
+	    top: 10px;
+	    right: 10px;
+	    cursor: pointer;
+	}
+
+	li.search .search-results {
+	    margin: 0;
+	    border-top: 1px solid #e9e9e9;
+	    background-color: #fff;
+	}
+
+	li.search .focused {
+	    margin: 0;
+	}
+
+/*====== Barra de navegacion*/
+
+	#logoMain:hover {
+		background-color: #fff;
+	}
+
+	.NavBar{
+		height: 50px;
+		position: relative;
+		background-color: #ef6c00;
+		line-height: 50px;
+		box-shadow: none;
+		transition: all .3s ease-in-out;
+	}
+
+	.NavBar-logo{
+		height: 50px;
+		line-height: 50px;
+		font-size: 19px;
+		text-align: center;
+		color: #ef6c00;
+	}
+
+	.NavBar-links{
+		text-align: right;
+		padding: 0 0 !important;
+	}
+
+	.NavBar-links li{
+		display: inline-block;
+		height: 50px;
+		float: none;
+		color: #ef6c00;
+	}
+
+	.NavBar-links li a{
+		height: 50px;
+		color: #fff;
+		line-height: 50px;
+	}
+
+	.side-nav{
+		background-color: #fff;
+		    width: 300px;
+	}
+
+	.container_menu{
+		padding-top: 40px;
+	}
+
+	.list{
+		color: #559344;
+		padding-left:20px;
+	}
+
+	.list2{
+		color: #ef6c00;
+		padding-left:30px;
+	}
+
+	.list2:hover{
+		background-color: #fff;
+	}
+
+	.lista{
+		color: #ef6c00;
+		padding-left:30px;
+	}
+
+	.collapsible{
+		background-color: #fff;
+		border-width: 2px;
+	}
+
+	.collapsible:hover{
+			background-color: #fff;
+	}
+
+	.productos{
+		padding:30px 20px 0px 10px;
+	}
+
+	.side-nav .collapsible-body li.active, .side-nav.fixed .collapsible-body li.active {
+	    background-color: #fff;
+	    padding: 0PX -0.5px 0px 31px;
+	}
+
+	.side-nav .collapsible, .side-nav.fixed .collapsible {
+	    box-shadow: none;
+	    padding-left: 10px;
+	    padding-top: 0px;
+	}
+
+
+	.side-nav .collapsible-header:hover, .side-nav.fixed .collapsible-header:hover {
+	    background-color: #fff;
+	}
+
+	.side-nav .collapsible-header, .side-nav.fixed .collapsible-header {
+	    background-color: transparent;
+	    border: none;
+	    line-height: inherit;
+	    height: inherit;
+	    padding: 11px 16px;
+	}
+
+	.account1{
+		padding-left: 25px;
+	}
+
+	.tittlee{
+		padding-left: 15px
+	}
+
+	[type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+	    position: relative;
+	    opacity: 0;
+	    pointer-events: none;
+	    margin-left: 27px;
+	}
+
+
+/*=====================================================
+					ScrollSpy
+======================================================*/
+	#scrollSpy{
+		position: fixed;
+		height: calc(100% + 0px);
+		overflow-y: auto;
+		padding-top: 0px;
+        padding-bottom: 0px;
+        margin-top: 0px;
+	}
+
+/* Botones para activar modal */
+
+
+	.modal{
+	    width: 450px;
+		height: 600px;
+		background: rgba(0,0,0,0.4);
+		padding: 10px 20px;
+		margin-top: 20px;
+		border-radius: 15px;
+		overflow: hidden;
+	}
+
+	@media only screen and (max-width : 992px) {
+		.modal {
+		width: 345px;
+	  	}
+	}
+
+	.form1{
+		width: 368px;
+		background: rgba(0,0,0,0);
+		padding: 10px 10px;
+		border-radius: 15px;
+		font-size: 15px;
+	}
+
+	.h21{
+		color: white;
+		text-align: center;
+		margin: 0;
+		font-size: 25px;
+		margin-bottom: 20px;
+	}
+
+	.inputo{
+		width: 100%;
+		height: 35px;
+		margin-bottom: 20px;
+		padding: 7px;
+		box-sizing: border-box;
+		font-size: 17px;
+		border: none;
+	}
+
+	.btnenv{
+		width: 100%;
+		margin-bottom: 20px;
+		padding: 7px;
+		box-sizing: border-box;
+		font-size: 17px;
+		border: none;
+	}
+
+	.textarea{
+		width: 100%;
+		margin-bottom: 20px;
+		height: 68px;
+		padding: 7px;
+		box-sizing: border-box;
+		font-size: 17px;
+		border: none;
+		min-height: 100px;
+		max-height: 60px;
+		min-width: 100%;
+		max-width: 100%;
+	}
+
+	#elbutton{
+		    background: #ef6c00;
+		    color: #fff;
+		    padding: 20px;
+
+		    border-radius: 5px;
+	}
+
+	#elbutton:hover{
+		cursor: pointer;
+	}
+
+	@media (max-width: 480px){
+		.form1{
+			width: 100%;
+			height: 100%;
+		}
+	}
+/*====== Encabezado*/
+
+	.topNav{
+		background: #ef6c00;
+	}
+
+	.topNav1{
+		background: #ef6c00;
+	}
+
+	.header{
+
+		padding-top: 0px;
+		padding-bottom: 30px;
+		padding-left: 300px;
+	}
+
+
+
+	@media only screen and (max-width : 992px) {
+	.header{
+	    padding-left: 0;
+	  }
+	}
+
+/*================= Seccion principal ======================*/
+
+
+	.carouselAlt{
+	    height: 283px;
+	    padding-bottom: 0px;
+	    margin-top: -26px;
+	    margin-bottom: -36px;
+	}
+
+	.carouselAlt .carousel-item > img{
+		 width: 200px;
+		  height: 200px;
+		  border-radius: 2px 2px 0 0;
+		  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+	}
+
+	.carousel-footer{
+		padding-top: 60px;
+	}
+
+/*====== Seccion promo index==========	*/
+
+	.promo,
+	.new-prod{
+		padding: 40px 0;
+		border-top: 1px solid #E1E1E1;
+	}
+
+	.promo i{
+		color: #EE6E73;
+	}
+
+/*====== footer===============*/
+
+	.footer{
+		padding-top: 30px;
+		padding-bottom: 30px;
+		background-color: #fff;
+		color: #fff;
+		background: #559344;
+		height: 890px;
+
+	}
+
+	@media only screen and (min-width : 992px) {
+		.footer{
+		    height: 525px;
+		}
+	}
+
+	.footer a{
+		color: #fff;
+	}
+
+	.footer-copyright{
+		text-align: center;
+		color: #fff;
+		border-top:1px solid rgba(255,255,255,.2);
+	}
+
+	.carousel .carousel-footer img {
+	    padding-top: 55px;
+
+	}
+
+	.medidasCarousel{
+		height: 204px;
+	    padding-bottom: 0px;
+	    margin-top: -90px;
+	}
+
+	.follow{
+		margin-top: 40px;
+	}
+
+	.maps{
+		margin-top: 40px
+	}
+  .color-green{
+    color: #559344;
+  }
+
+/*=====================================================
+					Media  Queries
+======================================================*/
+	@media (max-width: 600px){
+		.NavBar{
+			overflow: hidden;
+		}
+
+		.NavBar-show{
+			overflow-y: scroll;
+			height: 100%;
+			position: absolute;
+			z-index: 99;
+		}
+
+		.No-Scroll{
+			overflow: hidden !important;
+		}
+
+		.NavBar-links{
+			position: absolute;
+			top: 50px;
+			left: 0;
+			z-index: 10;
+			width: 100% !important;
+			height: auto;
+			padding: 0 25px !important;
+			margin: 0;
+			color: #fff;
+			border-top: 1px solid rgba(255,255,255,.1);
+		}
+
+		.NavBar-links li{
+			display: block;
+			width: 100%;
+			height: 45px;
+		}
+
+		.NavBar-links li a{
+			display: block;
+			width: 100%;
+			height: 45px;
+			line-height: 45px;
+			text-align: left;
+		}
+	}
+
+	@media (min-width: 601px) and (max-width: 991px){
+
+	}
+	@media (min-width: 992px){
+
+	}
