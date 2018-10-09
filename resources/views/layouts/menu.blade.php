@@ -10,8 +10,14 @@
         </div>
         <div class="collapse navbar-collapse" id="navbarToggler">
             <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a href="{{url('empresa')}}" class="nav-link">Empresa</a>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" id="navBarServicios" href="#pk" role="button" aria-haspopup="true" aria-expanded="false">Empresa</a>
+                    <ul class="dropdown-menu dropdown-menu-left dropdown-info" aria-labelledby="navBarServicios">
+                        <li class="dropdown-header"></li>
+                        <a class="dropdown-item" href="{{url('empresa')}}#mision">Misión</a>
+                        <a class="dropdown-item" href="{{url('empresa')}}#vision">Visión</a>
+                        <a class="dropdown-item" href="{{url('empresa')}}#valores-corporativos">Valores corporativos</a>
+                    </ul>
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" data-toggle="dropdown" id="navBarServicios" href="#pk" role="button" aria-haspopup="true" aria-expanded="false">Servicios</a>

@@ -20,9 +20,16 @@ Route::get('intranet', 'Auth\LoginController@ShowLoginForm')->name('intranet');
 
 Route::post('login', 'Auth\LoginController@login')->name('login');
 Route::post('logout', 'Auth\LoginController@logout')->name('logout');
-Route::get('dashboard', 'DashboardController@index')->name('dashboard');
+//Route::get('dashboard', 'ProductsController@index')->name('dashboard');
 
-//___________________________Ecommerce___________________________________
+//Mapea todas las rutas para /dashboard, el rooteo lo maneja react-router
+Route::get('/dashboard/{path?}', [
+    'uses' => 'ProductsController@index',
+    'as' => 'dashboard',
+    'where' => ['path' => '.*']
+]);
+
+//___________________________Ecommerce_public__________________________________
   Route::group(["prefix"=>"ecotienda"],function(){
     Route::get('/',                       'ShopController@index')->name('shop');//Retorna a la página principal
     Route::get('search',                  'EcommerceController@search')->name('shop.busqueda');//Maneja la busqueda y retorna a la vista del resultado

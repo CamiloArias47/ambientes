@@ -30,15 +30,15 @@
         <div class="row justify-content-center scroll-animation" data-av-animation="fadeInUp">
           <div class="col-sm-6 col-md-4">
             <div class="home-sections-item">
-              <div class="makeBg home-sections-pic" style="background-image: url({{asset('assets/img/ecology.jpg')}});">
+              <div class="makeBg home-sections-pic" style="background-image: url({{asset('assets/img/diseno-paisajismo.jpg')}});">
                 <div class="home-section-head">
                   <h2 class="home-section-boxtitle">Paisajismo</h2>
                 </div>
               </div>
               <div class="home-section-box">
                     <ul class="list-unstyled home-section-list">
-                      <li><a href="{{url('servicios-ambientales')}}#paisajismo">Paisajismo</a></li>
-                      <li><a href="{{url('servicios-ambientales')}}#zonas-verdes">Zonas verdes</a></li>
+                      <li><a href="{{url('servicios-ambientales')}}#paisajismo">Paisajismo y jardineria</a></li>
+                      <li><a href="{{url('servicios-ambientales')}}#zonas-verdes">Zonas verdes y escenarios deportivos</a></li>
                       <li><a href="{{url('servicios-ambientales')}}#arboles">Arboles</a></li>
                       <li><a href="{{url('servicios-ambientales')}}#residuos-vegetales">Manejo de residuos vegetales</a></li>
                     </ul>
@@ -49,7 +49,7 @@
             <div class="home-sections-item">
               <div class="makeBg home-sections-pic" style="background-image: url({{asset('assets/img/irrigation2.jpg')}});">
                 <div class="home-section-head">
-                  <h2 class="home-section-boxtitle">Construcciones <i class="fa fa-wrench" aria-hidden="true"></i></h2>
+                  <h2 class="home-section-boxtitle">Construcciones </h2>
                 </div>
               </div>
               <div class="home-section-box">
@@ -67,12 +67,14 @@
             <div class="home-sections-item">
               <div class="makeBg home-sections-pic" style="background-image: url({{asset('assets/img/solar-panels.jpg')}});">
                 <div class="home-section-head">
-                  <h2 class="home-section-boxtitle">Energias renovables </h2>
+                  <h2 class="home-section-boxtitle">Energias</h2>
                 </div>
               </div>
               <div class="home-section-box">
                     <ul class="list-unstyled home-section-list">
                       <li><a href="{{url('servicios-ambientales')}}#paneles-solares">Paneles solares</a></li>
+                      <li><a href="{{url('servicios-ambientales')}}#iluminacion">Iluminación y eficiencia energética</a></li>
+
                     </ul>
               </div>
             </div>
@@ -193,7 +195,7 @@
           <div class="col-md-4 scroll-animation" data-av-animation="fadeIn">
             <a href="{{url('productos')}}">
               <div class="card" style="width: 20rem;">
-                <img class="card-img-top" src="{{asset('assets/img/ecology.jpg')}}" alt="Card image cap">
+                <img class="card-img-top" src="{{asset('assets/img/producto.jpg')}}" alt="Card image cap">
                 <div class="card-body">
                   <p class="card-text font-size-1-2em">Comercializa tu producto.</p>
                 </div>

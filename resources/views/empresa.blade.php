@@ -21,13 +21,13 @@
   <div class="section">
     <div class="container">
       <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-6" id="mision">
           <h1>Misión</h1>
           <p class="font-size-1-2em">
             Ser una empresa pionera en integrar profesionales y empresas del sector ambiental y de la salud para mejorar, proteger, cuidar el medio ambiente y la sociedad a través de sus productos y servicios
           </p>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-6" id="vision">
           <h1>Visión</h1>
           <p class="font-size-1-2em">
             Ser un punto de referencia en el 2020  para la  seguridad, comodidad, y accesibilidad en la consecución de Productos y servicios donde predomine el respeto por el medio ambiente y la sociedad.
@@ -36,7 +36,7 @@
       </div>
       <hr />
       <div class="row">
-        <div class="col-md-7">
+        <div class="col-md-7" id="valores-corporativos">
           <h1>Valores corporativos</h1>
           <ul class="font-size-1-2em mt-3">
             <li>Compromiso por el medio ambiente</li>
@@ -54,7 +54,7 @@
       </div>
       <hr />
       <div class="row">
-        <div class="col-md-12">
+        <div class="col-md-12" id="quienes-somos">
           <div class="tim-title">
               <h1>Quienes somos</h1>
           </div>

@@ -327,7 +327,7 @@
   <div class="section section-img-background-fixed" id="iluminacion" style="background-image: url({{asset('assets/img/lights.jpg')}})">
     <div class="container">
       <div class="tim-title">
-          <h1>Iluminación</h1>
+          <h1>Iluminación y eficiencia energética</h1>
       </div>
       <p class="font-size-1-2em">
         Soluciones en eficiencia energética buscando reducir consumo energético lo cual no

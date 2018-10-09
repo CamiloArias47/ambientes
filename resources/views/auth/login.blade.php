@@ -4,7 +4,7 @@
     <meta charset="utf-8"/>
     <link type="text/css" rel="stylesheet" href="{{asset('assets/css/dashboard/style.css')}}"/>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link type="text/css" rel="stylesheet" href="{{asset('assets/plugins/materialize_1.0.0/css/materialize.css')}}"  media="screen,projection"/>
+    <link type="text/css" rel="stylesheet" href="{{asset('assets/plugins/materialize/css/materialize.css')}}"  media="screen,projection"/>
     <title></title>
   </head>
   <body>
@@ -38,6 +38,7 @@
         </div>
       </div>
     </div>
-    <script type="text/javascript" src="{{asset('assets/plugins/materialize_1.0.0/js/materialize.js')}}"></script>
+    <script src="{{asset('assets/js/jquery-3.2.1.js')}}"></script>
+    <script type="text/javascript" src="{{asset('assets/plugins/materialize/js/materialize.js')}}"></script>
   </body>
 </html>

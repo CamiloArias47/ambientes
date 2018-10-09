@@ -4028,60 +4028,7 @@ if (Vel) {
           });
         }
 
-        $this.off('click.sidenav').on('click.sidenav', function () {
-          if (menuOut === true) {
-            menuOut = false;
-            panning = false;
-            removeMenu();
-          } else {
-
-            // Disable Scrolling
-            var $body = $('body');
-            var $overlay = $('<div id="sidenav-overlay"></div>');
-            var oldWidth = $body.innerWidth();
-            $body.css('overflow', 'hidden');
-            $body.width(oldWidth);
-
-            // Push current drag target on top of DOM tree
-            $('body').append($dragTarget);
-
-            if (options.edge === 'left') {
-              $dragTarget.css({ width: '50%', right: 0, left: '' });
-              menu.velocity({ 'translateX': [0, -1 * options.menuWidth] }, { duration: 300, queue: false, easing: 'easeOutQuad' });
-            } else {
-              $dragTarget.css({ width: '50%', right: '', left: 0 });
-              menu.velocity({ 'translateX': [0, options.menuWidth] }, { duration: 300, queue: false, easing: 'easeOutQuad' });
-            }
-
-            // Overlay close on click
-            $overlay.css('opacity', 0).click(function () {
-              menuOut = false;
-              panning = false;
-              removeMenu();
-              $overlay.velocity({ opacity: 0 }, { duration: 300, queue: false, easing: 'easeOutQuad',
-                complete: function () {
-                  $(this).remove();
-                }
-              });
-            });
-
-            // Append body
-            $('body').append($overlay);
-            $overlay.velocity({ opacity: 1 }, { duration: 300, queue: false, easing: 'easeOutQuad',
-              complete: function () {
-                menuOut = true;
-                panning = false;
-              }
-            });
-
-            // Callback
-            if (typeof options.onOpen === 'function') {
-              options.onOpen.call(this, menu);
-            }
-          }
-
-          return false;
-        });
+      
       });
     },
     destroy: function () {

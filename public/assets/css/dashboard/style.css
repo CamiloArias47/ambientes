@@ -1,3 +1,166 @@
-body {
-  background-color: #f1f1f1;
+/*Importando hojas de estilo*/
+@import url('https://fonts.googleapis.com/css?family=Noto+Sans');
+@import url('https://fonts.googleapis.com/css?family=Poiret+One');
+
+
+/*=====================================================
+					Estilos generales
+======================================================*/
+
+	body,
+	html{
+		font-family: 'Noto Sans', sans-serif;
+		margin: 0;
+		padding: 0;
+		font-size: 16px;
+		position: relative;
+		width: 100%;
+		height: 100%;
+		background-color: #f1f1f1;
+	}
+
+	 header,main, footer{
+	      padding-left: 300px;
+
+	}
+
+	@media only screen and (max-width : 992px) {
+	header, main, footer {
+	    padding-left: 0;
+	  }
+	}
+
+	.nav-wrapper{
+		padding-left: 1em;
+	}
+
+	@media only screen and (max-width : 992px) {
+		.nav-wrapper {
+		    padding-left: 0;
+	  	}
+	}
+
+	.p-0{
+		padding: 0rem !important;
+	}
+
+/*====== Menu top ==========*/
+.topNavDashboard{
+	background-color: #006d67;
 }
+
+.btnExitSession{
+	border: none;
+	background: transparent;
+}
+
+/*====== Barra de navegacion*/
+
+	.side-nav{
+		background-color: #fff;
+		width: 300px;
+	}
+
+	.container_menu{
+		padding-top: 40px;
+	}
+
+	.list{
+		color: #559344;
+		padding-left:20px;
+	}
+
+	.collapsible{
+		background-color: #fff;
+		border-width: 2px;
+	}
+
+	.collapsible:hover{
+			background-color: #fff;
+	}
+
+	.side-nav .collapsible-body li.active, .side-nav.fixed .collapsible-body li.active {
+	    background-color: #fff;
+	    padding: 0PX -0.5px 0px 31px;
+	}
+
+	.side-nav .collapsible, .side-nav.fixed .collapsible {
+	    box-shadow: none;
+	    padding-left: 10px;
+	    padding-top: 0px;
+	}
+
+
+	.side-nav .collapsible-header:hover, .side-nav.fixed .collapsible-header:hover {
+	    background-color: #fff;
+	}
+
+	.side-nav .collapsible-header, .side-nav.fixed .collapsible-header {
+	    background-color: transparent;
+	    border: none;
+	    line-height: inherit;
+	    height: inherit;
+	    padding: 11px 16px;
+	}
+
+	.account1{
+		padding-left: 25px;
+	}
+
+	.tittlee{
+		padding-left: 15px
+	}
+
+	[type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+	    position: relative;
+	    opacity: 0;
+	    pointer-events: none;
+	    margin-left: 27px;
+	}
+
+  .side-nav.fixed {
+      left: 0;
+      -webkit-transform: translateX(0);
+      transform: translateX(0);
+      position: fixed;
+      margin-top: 0px;
+  }
+
+	.sidenav li > form > button {
+	    color: rgba(0, 0, 0, 0.87);
+	    display: block;
+	    font-size: 14px;
+	    font-weight: 500;
+	    height: 48px;
+	    line-height: 48px;
+	    padding: 0 32px;
+	}
+
+	.sidenav li > form > button > i.material-icons {
+    float: left;
+    height: 48px;
+    line-height: 48px;
+    margin: 0 32px 0 0;
+    width: 24px;
+    color: rgba(0, 0, 0, 0.54);
+	}
+
+/*=====================================================
+					Tabs productos
+=======================================================*/
+
+
+
+/*=====================================================
+					Media  Queries
+======================================================*/
+	@media (max-width: 600px){
+
+	}
+
+	@media (min-width: 601px) and (max-width: 991px){
+
+	}
+	@media (min-width: 992px){
+
+	}
