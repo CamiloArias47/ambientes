@@ -76,9 +76,10 @@
     <script type="text/javascript" src="{{ asset('assets/plugins/bootstrap-tagsinput-latest/src/bootstrap-tagsinput.js') }}"></script>
 
     <script type="text/javascript">
-      var name   = "{!! auth()->user()->name !!}",
-          images = {profileImg : "{!! asset('assets/img/camilo.jpg') !!}",
-                    backgroundMenu : "{!! asset('assets/img/lines.jpg') !!}"},
+      var user   = {name:"{!! auth()->user()->name !!}",
+                    email:"{!! auth()->user()->email !!}",
+                    profileImg:"{!! asset('assets/img/camilo.jpg') !!}"},
+          images = {backgroundMenu : "{!! asset('assets/img/lines.jpg') !!}"},
           token  = "{!! csrf_token() !!}",
           routes = {logout : "{!! route('logout') !!}"};
 

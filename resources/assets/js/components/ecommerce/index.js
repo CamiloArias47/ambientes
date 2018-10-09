@@ -364,7 +364,8 @@ class Ecommerce extends React.Component
   componentDidMount(){
     var el = document.getElementById('tabsProducto')
     var instance = M.Tabs.init(el, {swipeable : false});
-    //('.tabs').tabs();
+    this.props.setTitleModule("Ecommerce")
+    console.log(`[debug] props eccommerce ${this.props}`, this.props.location.pathname);
   }
 
 	render(){
@@ -456,8 +457,10 @@ class Ecommerce extends React.Component
                          routeEditImg={this.props.routes.routeEditImg}
                          finishUpdate={this.finishUpdate}
                          routeDeleteImg={this.props.routes.deleteImg}/>
+
   			   </div>)
 	}
+
 }
 
 //Componente para mostrar los productos

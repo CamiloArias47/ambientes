@@ -10,23 +10,15 @@ class Main extends React.Component{
   constructor(props){
     super(props)
     this.state = {
-      name : this.props.name,
-      routes : this.props.routes
+      routes : this.props.routes,
+      titleModule : "Dashboard"
     }
 
-    this.exitSession = this.exitSession.bind(this);
+    this.setTitleModule = this.setTitleModule.bind(this)
   }
 
-  exitSession(){
-  let  opts =  {headers: {'Accept': 'application/json',
-                          'Content-Type': 'application/json'},
-                 method:'POST'
-                }
-    console.log(this);
-  fetch(this.props.routes.logout,opts)
-    .then( res => res.json() )
-    .then( data => { console.log("[ambientes] adios!");} )
-    .catch(e => console.error(`[peticion] '/saveCategory'`) )
+  setTitleModule(title){
+    this.setState({titleModule:title});
   }
 
   componentDidMount(){
@@ -49,9 +41,9 @@ class Main extends React.Component{
                       <div className="background">
                         <img src={ this.props.images.backgroundMenu } />
                       </div>
-                      <a href="#user"><img className="circle" src={this.props.images.profileImg}/></a>
-                      <a href="#name"><span className="white-text name">{this.state.name}</span></a>
-                      <a href="#email"><span className="white-text email">jdandturk@gmail.com</span></a>
+                      <a href="#user"><img className="circle" src={this.props.user.profileImg}/></a>
+                      <a href="#name"><span className="white-text name">{this.props.user.name}</span></a>
+                      <a href="#email"><span className="white-text email">{this.props.user.email}</span></a>
                     </div>
                   </li>
                   <li><Link to="/dashboard"><i className="material-icons">home</i> Home</Link></li>
@@ -69,7 +61,7 @@ class Main extends React.Component{
                 <main>
                   <nav id="topNavDashboard">
                     <div className="nav-wrapper topNavDashboard">
-                      <a href="#" className="brand-logo">Titulo de sección</a>
+                      <a href="#" className="brand-logo">{this.state.titleModule}</a>
                       <a  href="#" data-target="slide-out" className="sidenav-trigger"><i className="material-icons">menu</i></a>
                       <ul className="right hide-on-med-and-down" id="mobile-demo">
                         <li><a href="#"><i className="material-icons">search</i></a></li>
@@ -87,14 +79,15 @@ class Main extends React.Component{
                   </nav>
 
                   <div>
-                    <Route path="/dashboard/ecommerce" component={ (props) => <Ecommerce {...props} fatherCategories={this.props.fatherCategories}
-                                                                                                brands={this.props.brands}
-                                                                                                tags={tags}
-                                                                                                routes={this.props.routes}
-                                                                                                defaultImg={this.props.defaultImg}
-                                                                                                maxUpload={this.props.maxUpload}
-                                                                                                products={this.props.products}
-                                                                                                prev={this.props.prev} /> } />
+                    <Route path="/dashboard/ecommerce" render={ (props) => <Ecommerce {...props} fatherCategories={this.props.fatherCategories}
+                                                                                                 brands={this.props.brands}
+                                                                                                 tags={tags}
+                                                                                                 routes={this.props.routes}
+                                                                                                 defaultImg={this.props.defaultImg}
+                                                                                                 maxUpload={this.props.maxUpload}
+                                                                                                 products={this.props.products}
+                                                                                                 prev={this.props.prev}
+                                                                                                 setTitleModule={this.setTitleModule} /> } />
                   </div>
                 </main>
              </div>
@@ -105,7 +98,7 @@ class Main extends React.Component{
 
 
 setTimeout(()=>{
-	ReactDOM.render(<Main name={name}
+	ReactDOM.render(<Main user={user}
                         images={images}
                         routes={routes}
                         token={token}

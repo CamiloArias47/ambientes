@@ -32,12 +32,12 @@ class ProductsController extends Controller
 
        // dd($products, $ProductsL, $lastP);
       return view('dashboard.dashboard')->with(['fatherCategories' => json_encode($fatherCategories),
-                                                   'brands'           => json_encode($brands),
-                                                   'tags'             => json_encode($tags),
-                                                   'products'         => json_encode($products),
-                                                   'prev'             => $this->thereIsMorePrevNext($lastP["created_at"],"<"),
-                                                   'maxUpload'        => 20,
-                                                   ]);
+                                                'brands'           => json_encode($brands),
+                                                'tags'             => json_encode($tags),
+                                                'products'         => json_encode($products),
+                                                'prev'             => $this->thereIsMorePrevNext($lastP["created_at"],"<"),
+                                                'maxUpload'        => 20,
+                                                ]);
     }
 
 
