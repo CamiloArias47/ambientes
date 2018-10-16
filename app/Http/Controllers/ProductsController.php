@@ -168,4 +168,119 @@ class ProductsController extends Controller
 
       return $array;
   }
+
+  /*
+  |--------------------------------------------------------------------------
+  | API aplication software interface, peticiones.
+  |--------------------------------------------------------------------------
+  |
+  | Peticiones http
+  |
+  */
+
+  public function responseFatherCategories(Request $request)
+  {
+    $fatherCategories = Shop_fathercategory::orderBy('name','asc')->get();
+    return response()->json(["fathercategories" => $fatherCategories]);
+  }
+
+  //maneja peticiones post y retorna las categorias de un categoria padre
+  public function responseGetCategories(Request $request)
+  {
+    $categories = Shop_category::where('shop_fathercategory_id',$request->id)->orderBy('name','asc')->get();
+    return response()->json(["categories" => $categories]);
+  }
+
+  //maneja peticiones post, retorna las subcategorias de la categoria pedida
+  public function responseGetSubCategories(Request $request)
+  {
+      $subcategories = Shop_subcategory::where('shop_category_id','=',$request->id)->orderBy('name','asc')->get();
+      return response()->json(["subcategories" => $subcategories]);
+  }
+
+  /**
+  * Maneja peticiones post y responde con las marcas
+  */
+  public function responseGetBrands(Request $request){
+    $brands = Shop_brand::orderBy('name','asc')->get();
+    return response()->json(['brands' => $brands]);
+  }
+
+  /**
+  * Maneja peticiones post y responde con los tags
+  */
+  public function responseGetTags(Request $request){
+    $tags = Shop_tag::orderBy('name','asc')->get();
+    return response()->json(['tags' => $tags]);
+  }
+
+  //maneja peticiones post para almacenar un producto
+  public function storage(Request $request)
+  {
+    return response()->json(['request' => $request->all(), 'tags' => json_decode($request->nuevosTags)]);
+    /*  $saved = false;
+      $type  = false;
+
+      if( !is_bool($this->validateStorage($request)) ){ //validar la información, si no retorna un boleano, la validacion falló
+          return $this->validateStorage($request);
+      }
+
+      $errors = ["Ok"];
+      $save_tags        = ($request->crearTagsCrearProducto == "on") ? true : false;
+      $productoCreated  = false;
+
+      $clasifications = $this->handlerStorageClasification($request); //metodo que se encarga de las catgorias, de crearlas, si es necesario o solo retorna la subcategoria seleccionada
+      if($clasifications["subcategoria_id"] != null){
+          $subcategoria_id = $clasifications["subcategoria_id"];
+      }
+      else{
+          $errors = $clasifications["errors"];
+      }
+
+      $brands = $this->handlerStorageBrands($request);
+      if($brands["marca_id"] != null){
+          $marca_id = $brands["marca_id"];
+      }
+      else{
+          $errors = $brands["errors"];
+      }
+
+      if($save_tags){
+          $tags = $this->saveTags($request->agregarTagsCrearProducto);
+      }
+
+      if( isset($subcategoria_id) && isset($marca_id) ){
+          //si es un accesorio
+          if($request->accesorioCrearProducto != "" && $request->accesorioCrearProducto == "on"){
+              $storage = $this->saveAccessories($request, $marca_id, $subcategoria_id, ( isset($tags) )?$tags:null);
+              $saved = $storage["saved"];
+              if($storage["saved"]){
+                  $productoCreated = $storage["accessory"];
+                  $type            = "accessory";
+              }
+              else{
+                  $errors = ["No sue posible guardar el accesorio"];
+              }
+          }
+
+          //si es un proiducto
+          else{
+              $storage = $this->saveProduct($request, $marca_id, $subcategoria_id, ( isset($tags) )?$tags:null);
+              $saved = $storage["saved"];
+              if($storage["saved"]){
+                  $productoCreated = $storage["product"];
+                  $type            = "product";
+              }
+              else{
+                  $errors = ["No sue posible guardar el producto"];
+              }
+          }
+
+      }
+
+
+
+      return response()->json(["saved" => $saved, "errors" => $errors, "product" => $productoCreated, "type" => $type]);
+      */
+  }
 }

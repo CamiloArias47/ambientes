@@ -1,6 +1,11 @@
 import React            from 'react'
 import ReactDOM         from 'react-dom'
 import Cropper          from 'cropperjs'
+import FatherCategoryController   from '../../controllers/fatherCategoryController.js'
+import CategoryController         from '../../controllers/categoryController.js'
+import SubCategoryController      from '../../controllers/subCategoryController.js'
+import TagController              from '../../controllers/tagController.js'
+import BrandController            from '../../controllers/marcaController.js'
 
 var Helpers = require('../helpers.js'); //incluir el archivo que contine funciones peara diferentes fines
 var helper  = new Helpers;
@@ -16,20 +21,34 @@ class Ecommerce extends React.Component
 	constructor(props){
 		super(props)
 
+    const routesFatherCat = {getFatherCat : this.props.routes.getFatherCategories},
+          routesCategory  = {getCategories: this.props.routes.getCategories},
+          routesSubCat    = {getSubCat: this.props.routes.getSubcategories},
+          routesTags      = {getTags:this.props.routes.getTags},
+          routesBrands    = {getBrands:this.props.routes.getBrands}
+
 		this.state = {pageForm           :'first', //renderiza un formulario, "first" los datos iniciales, "second" para agregar imagenes
-	                  productCreated     : false, //almacenara el id del producto creado, para pasarlo a la  arga de imagenes
-	                  productCreatedType : "", //almacenara el tipo de producto que se cree (producto o accesorio), esto indicara en que tabla se deben guardar las imagenes
-	                  products           : this.props.products, //productos a mostrar en la pestaña productos
-	                  productEdit        : null, //informacion del producto a editar
-	                  pageFormEdit       : 'first', //formulario de edicion de
-	                  productEditing     : false, //id del producto en edicion
-	                  typeEdit           : "", //indicara el tipo de producto que se edito (como quedo despues de la edicion) sirve para el ajax que refresca el producto que se esta editando
-	                  optCategories      : [], //donde se almacenara los option de las categorias
-	                  optSubCatego       : [], //donde se guardaran la info para contruir los option de subcategorias
-	                  prev               : this.props.prev, //indica si debe mostrar el boton de anterior
-	                  next               : false, //indica si debe mostrar el boton de siguiente (mas actuales)
-	                  gifFilter          : false, //cuando es true muestra un gif para el filtrador por nombre
-	                 }
+                  productCreated     : false, //almacenara el id del producto creado, para pasarlo a la  arga de imagenes
+                  productCreatedType : "", //almacenara el tipo de producto que se cree (producto o accesorio), esto indicara en que tabla se deben guardar las imagenes
+                  products           : this.props.products, //productos a mostrar en la pestaña productos
+                  productEdit        : null, //informacion del producto a editar
+                  pageFormEdit       : 'first', //formulario de edicion de
+                  productEditing     : false, //id del producto en edicion
+                  typeEdit           : "", //indicara el tipo de producto que se edito (como quedo despues de la edicion) sirve para el ajax que refresca el producto que se esta editando
+                  optCategories      : [], //donde se almacenara los option de las categorias
+                  optSubCatego       : [], //donde se guardaran la info para contruir los option de subcategorias
+                  prev               : this.props.prev, //indica si debe mostrar el boton de anterior
+                  next               : false, //indica si debe mostrar el boton de siguiente (mas actuales)
+                  gifFilter          : false, //cuando es true muestra un gif para el filtrador por nombre
+                  newTags            : [], //tags nuevos a crear
+                  fatherCategories   : [], //categorias padre
+                 }
+
+    this.fatherCategoryController = new FatherCategoryController(this.props.token, routesFatherCat); //modelo categorias padres
+    this.categoryController = new CategoryController(this.props.token, routesCategory);
+    this.subCategoryController = new SubCategoryController(this.props.token, routesSubCat);
+    this.tagController = new TagController(this.props.token, routesTags);
+    this.brandController = new BrandController(this.props.token, routesBrands);
 
 		this.submitForm      = this.submitForm.bind(this);
 		this.finishCreate    = this.finishCreate.bind(this);
@@ -38,31 +57,37 @@ class Ecommerce extends React.Component
 	  this.finishUpdate    = this.finishUpdate.bind(this); //cambia el state pageFormEdit a firsdt
 	  this.filter          = this.filter.bind(this); //maneja el onChange de los filtros de productos
 	  this.handlerPrev     = this.handlerPrev.bind(this); //maneja el onClick del boton prev
+    this.onTagAdd        = this.onTagAdd.bind(this); //callback cuando se agrega un tag
+    this.onTagDelete     = this.onTagDelete.bind(this); //callback que se ejecuta cuando se elimina un tag del input de tags
 	}
+
 
 	//manja el evento onSubmit del formulario que crea un nuevo producto
 	submitForm(ev){
 		ev.preventDefault()
 		$('#createProductPrice').val($('#createProductPrice').val().replace(/[.]/gi,"")) //quitarle los puntos al precio
 		var formData = new FormData(document.getElementById('formCreateProduct'))
+    formData.append('nuevosTags',JSON.stringify(this.state.newTags))
 
+    console.log(`[debug] formData: ${formData}`, formData);
 		$.ajax({
 			url:this.props.routes.storage,
 			type:'POST',
+      headers:{'X-CSRF-TOKEN': this.props.token},
 			data: formData,
 			dataType:"JSON",
 			cache: false,
 			contentType: false,
 			processData: false,
 				beforeSend:function(){
-					$("#BlockRequestAjax").fadeIn();
+					console.log(`[debug] enviando formulario...`);
 				}.bind(this),
 				success:function(response){
-					$("#BlockRequestAjax").fadeOut();
+					console.log(`[debug] formulario enviado`);
 
 					if(response.saved){
-					    $("#BlockRequestAjax").fadeOut();
-					    helper.showMessage("success","Datos almacenados", "Debes agregar fotos a el producto")
+
+					  helper.showMessage("success","Datos almacenados", "Debes agregar fotos a el producto")
 						this.setState({pageForm           : "second",
 					                   productCreated     : response.product.id,
 					                   productCreatedType : response.type});
@@ -113,16 +138,15 @@ class Ecommerce extends React.Component
 	//renderiza uno de los formulario
 	renderAForm(){
 		if(this.state.pageForm == "first"){
-			return <FormCreate fatherCategories={this.props.fatherCategories}
+			return <FormCreate fatherCategories={this.state.fatherCategories}
                          routeGetCategories={this.props.routes.getCategories}
-                         routeGetSubCategories={this.props.routes.getSubCategories}
+                         routeGetSubCategories={this.props.routes.getSubcategories}
                          routeProductsOfAccessory={this.props.routes.productsOfAccessory}
                          routeQuitTag={this.props.routes.routeQuitTag}
+                         routeGetBrands={this.props.routes.getBrands}
                          quitProductOfAccessory={this.props.routes.quitProductOfAccessory}
                          quitAccessoryOfProduct={this.props.routes.quitAccessoryOfProduct}
                          getAccessories={this.props.routes.getAccessories}
-                         brands={this.props.brands}
-                         tags={this.props.tags}
                          maxUpload={this.props.maxUpload}
                          submitForm={this.submitForm}
                          defaultImg={this.props.defaultImg}
@@ -138,7 +162,14 @@ class Ecommerce extends React.Component
                          switchAccessory="createProductAccesory"
                          switchHaveAccesories="createProductHaveAccesories"
                          editOrCreate="create"
-                         productEdit={null}/>
+                         productEdit={null}
+                         token={this.props.token}
+                         onChipAdd={this.onTagAdd}
+                         onChipDelete={this.onTagDelete}
+                         categoryController={this.categoryController}
+                         subCategoryController={this.subCategoryController}
+                         tagController={this.tagController}
+                         brandController={this.brandController}/>
 		}
 		else if(this.state.pageForm == "second"){
 			return <FormImages defaultImg={this.props.defaultImg}
@@ -150,6 +181,24 @@ class Ecommerce extends React.Component
                                finishCreate={this.finishCreate}/>
 		}
 	}
+
+  /**
+  * Callback cuando se agrega un tag al input de nuevos tags
+  * actualiza el state newTags que contiene los tags que se crearan
+  */
+  onTagAdd(){
+    var elm = M.Chips.getInstance(document.getElementById('newTags') ); //acceder al input de tags
+    this.setState({newTags: elm.chipsData})
+  }
+
+  /**
+  * Callback que se ejecutara ciuando se elimine un tag del input de nuevos tags
+  * actualiza el state newTags que contiene los tags que se crearan
+  */
+  onTagDelete(){
+    var elm = M.Chips.getInstance(document.getElementById('newTags') ); //acceder al input de tags
+    this.setState({newTags: elm.chipsData})
+  }
 
 	//maneja el evento onClick del boton que finaliza la carga de fotos
 	finishCreate(ev){
@@ -221,7 +270,7 @@ class Ecommerce extends React.Component
 	//renderiza los option de las categorias padres
 	renderOptFatherCategories(){
 		var opt = [];
-		this.props.fatherCategories.forEach( fat => {
+		this.state.fatherCategories.forEach( fat => {
 			opt.push(<option value={fat.id} key={"optFath-"+fat.id}>{fat.name}</option>)
 		})
 		return opt;
@@ -247,35 +296,19 @@ class Ecommerce extends React.Component
 
 	//realiza una peticion ajax para cargar las categorias de una categoria padre
 	ajaxGetCategories(id){
-		$.ajax({
-			url:this.props.routes.getCategories,
-			type:"POST",
-			data:{id:id},
-			dataType:"JSON",
-			 beforeSend:function(){
 
-			 }.bind(this),
-			 success:function(response){
-			 	this.setState({optCategories:response.categories,
-			 	               optSubCatego:[]})
-			 }.bind(this)
-		})
+    this.categoryController.setCategories(id, data=>{
+      this.setState({optCategories:data,
+                     optSubCatego:[]})
+    })
+
 	}
 
 	//realiza una peticion ajax para cargar las sub-categorias de una categoria
 	ajaxGetSubCategories(id){
-		$.ajax({
-			url:this.props.routes.getSubCategories,
-			type:"POST",
-			data:{id:id},
-			dataType:"JSON",
-			 beforeSend:function(){
-
-			 }.bind(this),
-			 success:function(response){
-			 	this.setState({optSubCatego:response.subcategories})
-			 }.bind(this)
-		})
+    this.subCategoryController.getSubcategories(id, data=>{
+      this.setState({optSubCatego:data})
+    })
 	}
 
 	//maneja el onChange de los filtros de productos
@@ -362,10 +395,14 @@ class Ecommerce extends React.Component
 	}
 
   componentDidMount(){
+
+    this.fatherCategoryController.setfatherCategoriesOptions( data => {
+      this.setState({fatherCategories:data})
+    })
+
     var el = document.getElementById('tabsProducto')
     var instance = M.Tabs.init(el, {swipeable : false});
-    this.props.setTitleModule("Ecommerce")
-    console.log(`[debug] props eccommerce ${this.props}`, this.props.location.pathname);
+    this.props.setTitleModule("Ecommerce") //pone el titulo a la barra superior
   }
 
 	render(){
@@ -384,21 +421,21 @@ class Ecommerce extends React.Component
                           <div className="col-md-12 m-b">
                             <div className="row">
                               <div className="col-md-3">
-                                <select className="form-control" name="filterFather" id="filterFather" onChange={this.filter}>
+                                <select className="browser-default" name="filterFather" id="filterFather" onChange={this.filter}>
                                   <option value="">Categoria padre</option>
                                   {this.renderOptFatherCategories()}
                                 </select>
                               </div>
 
                               <div className="col-md-3">
-                                <select className="form-control" name="filterCategory" id="filterCategory" onChange={this.filter}>
+                                <select className="browser-default" name="filterCategory" id="filterCategory" onChange={this.filter}>
                                   <option value="">Categoria</option>
                                   {this.renderOptCategories()}
                                 </select>
                               </div>
 
                               <div className="col-md-3">
-                                <select className="form-control" name="filterSubCate" id="filterSubCate" onChange={this.filter}>
+                                <select className="browser-default" name="filterSubCate" id="filterSubCate" onChange={this.filter}>
                                   <option value="">Subcategoria</option>
                                   {this.renderOptSubCategories()}
                                 </select>
@@ -436,16 +473,15 @@ class Ecommerce extends React.Component
                   </div>
               </div>
 
-      				 <ModalEdit fatherCategories={this.props.fatherCategories}
+      				 <ModalEdit fatherCategories={this.state.fatherCategories}
                          routeGetCategories={this.props.routes.getCategories}
                          routeGetSubCategories={this.props.routes.getSubCategories}
                          routeProductsOfAccessory={this.props.routes.productsOfAccessory}
                          routeQuitTag={this.props.routes.routeQuitTag}
+                         routeGetBrands={this.props.routes.getBrands}
                          quitProductOfAccessory={this.props.routes.quitProductOfAccessory}
                          quitAccessoryOfProduct={this.props.routes.quitAccessoryOfProduct}
                          getAccessories={this.props.routes.getAccessories}
-                         brands={this.props.brands}
-                         tags={this.props.tags}
                          maxUpload={this.props.maxUpload}
                          submitForm={this.submitEdit}
                          defaultImg={this.props.defaultImg}
@@ -456,7 +492,11 @@ class Ecommerce extends React.Component
                          pageFormEdit={this.state.pageFormEdit}
                          routeEditImg={this.props.routes.routeEditImg}
                          finishUpdate={this.finishUpdate}
-                         routeDeleteImg={this.props.routes.deleteImg}/>
+                         routeDeleteImg={this.props.routes.deleteImg}
+                         token={this.props.token}
+                         tagController={this.tagController}
+                         brandController={this.brandController}
+                         />
 
   			   </div>)
 	}
@@ -566,31 +606,44 @@ class Produt extends React.Component
 	}
 }
 
-//Formulario de creación de productos
-//Props: fatherCategories         -> array           Contiene las categorias padre de la base de datos
-//       routeGetCategories       -> string          Ruta donde se hara la petición ajax que retorne las categorias de una supercategoria
-//       routeGetSubCategories    -> string          Rota donde se hacen las peticiones ajax para traer las subcategorias de una categoria
-//       routeProductsOfAccessory -> string          Ruta donde se hacen las peticiones d elos productos para el accesorio que se este creando
-//       routeQuitTag             -> string          Ruta donde se hacen la peticiones ajax para quitar un tag a un producto o accesorio en edición
-//       quitProductOfAccessory   -> string          Ruta donde se hacen las peticiones ajx para eliminar un producto que se le asigno a un accesorio
-//       quitAccessoryOfProduct   -> string          Ruta doince se hacen la petciones post-ajax para quitar un accesorio a un producto
-//       getAccessories           -> string          Ruta para traer los accesorios
-//       brands                   -> array           Marcas
-//       tags                     -> array           Tags
-//       maxUpload                -> int             Numero de carga maxima de archivos al servidor
-//       defaultImg               -> string          Ruta de la imagen por defaulr
-//       idFieldDescription       -> string          id del campo de descripcion
-//       idFielTags               -> string          id de el select de tags
-//       idAccesories             -> string          id del select de accesories
-//       idSelectCategory         -> string          id del select de categorias
-//       idProductsOfAccesories   -> string          id del select multiple de productos
-//       formId                   -> string          id del formulario
-//       switchShowPriceId        -> string          id del switch mostrar precio
-//       switchMoreTagsId         -> string          id del switch para agregar mas tags
-//       switchAccessory          -> string          id del switch que define si es un accesorio
-//       switchHaveAccesories     -> string          id del switch que que presunta si el producto tiene accessorios
-//       editOrCreate             -> string          indica si se debe comportar como que tipo de formulario
-//       productEdit              -> object||null    Informacion del producto a editar
+
+
+
+
+
+/**
+*Formulario de creación de productos
+*       Props:
+*       @prop {array} fatherCategories         ->            Contiene las categorias padre de la base de datos
+*       @prop {string} routeGetCategories       ->           Ruta donde se hara la petición ajax que retorne las categorias de una supercategoria
+*       @prop {string} routeGetSubCategories    ->           Rota donde se hacen las peticiones ajax para traer las subcategorias de una categoria
+*       @prop {string} routeProductsOfAccessory ->           Ruta donde se hacen las peticiones d elos productos para el accesorio que se este creando
+*       @prop {string} routeQuitTag             ->           Ruta donde se hacen la peticiones ajax para quitar un tag a un producto o accesorio en edición
+        @prop {string} routeGetBrands           ->           Ruta para peticiones de marcas
+*       @prop {string} quitProductOfAccessory   ->           Ruta donde se hacen las peticiones ajx para eliminar un producto que se le asigno a un accesorio
+*       @prop {string} quitAccessoryOfProduct   ->           Ruta doince se hacen la petciones post-ajax para quitar un accesorio a un producto
+*       @prop {string} getAccessories           ->           Ruta para traer los accesorios
+*       @prop {int} maxUpload                  ->              Numero de carga maxima de archivos al servidor
+*       @prop {string} defaultImg               ->           Ruta de la imagen por defaulr
+*       @prop {string} idFieldDescription       ->           id del campo de descripcion
+*       @prop {string} idFielTags               ->           id de el select de tags
+*       @prop {string} idAccesories             ->           id del select de accesories
+*       @prop {string} idSelectCategory         ->           id del select de categorias
+*       @prop {string} idProductsOfAccesories   ->           id del select multiple de productos
+*       @prop {string} formId                   ->           id del formulario
+*       @prop {string}  switchShowPriceId        ->           id del switch mostrar precio
+*       @prop {string} switchMoreTagsId         ->           id del switch para agregar mas tags
+*       @prop {string} switchAccessory          ->           id del switch que define si es un accesorio
+*       @prop {string} switchHaveAccesories     ->           id del switch que que presunta si el producto tiene accessorios
+*       @prop {string} editOrCreate             ->           indica si se debe comportar como que tipo de formulario
+*       @prop {object||null} productEdit        ->     Informacion del producto a editar
+*       @prop {string}  token                   ->           token de la app Laravel
+*       @prop {function} onChipAdd              -> callback cuando se agrega un tag al input de nuevos tags
+*       @prop {function} onChipDelete           -> callback cuando se elimina un tag del input de nuevos tags
+*       @prop {instance} categoryController     -> instancia del controlador de categorias
+*       @prop {instance} tagController          -> instancia de el controlador de tags
+*       @prop {instance} brandController        -> instancia del controlador de marcas
+*/
 class FormCreate extends React.Component
 {
 	constructor(props){
@@ -626,9 +679,13 @@ class FormCreate extends React.Component
 		              'renderProductsAttach' : false, //si es true renderiza los productos que se le han añadido al accesorio, debe estar en el formulario de edicion
 		              'shop_products'        : [], //donde se pondran los productos relacionados con un accesorio
 		              'shop_accessories'     : [], //los accesorios de un producto, permite renderizar los tags, para poder eliminarlos
+                  selects                : {},
+                  selectsInstances       : {},
+                  brands                 : [], //marcas
+                  allTags                : [], //tags de la base de datos se setea haciendo una petición
 		             };
 
-		this.handlerChangeFatherCategory  = this.handlerChangeFatherCategory.bind(this) //funcion que maneja el onChange del input #createProductFatherCategory para mostrar el campo de otra categoria padre
+		  this.handlerChangeFatherCategory  = this.handlerChangeFatherCategory.bind(this) //funcion que maneja el onChange del input #createProductFatherCategory para mostrar el campo de otra categoria padre
 	    this.handlerChangeCategory        = this.handlerChangeCategory.bind(this) //maneja el onCHange del select de categorias
 	    this.handlerChangeSubCategory     = this.handlerChangeSubCategory.bind(this) //maneja en onChange del select de subcategorias
 	    this.handlerChangeBrand           = this.handlerChangeBrand.bind(this) //maneja el onChange del select de marcas
@@ -639,9 +696,33 @@ class FormCreate extends React.Component
 
 	    this.handlerChangeHaveAccessory   = this.handlerChangeHaveAccessory.bind(this) //maneja el onClick del switch que indica si el producto tiene accesorios
 	    this.ajaxDeleteProductOfAccessory = this.ajaxDeleteProductOfAccessory.bind(this) //maneja peticiones ajax para quitar un producto que se le asigno a un accesorio
-        this.ajaxQuitTag                  = this.ajaxQuitTag.bind(this) //realiza peticiones ajax-post para eliminar un tag de un producto o accesorio
+      this.ajaxQuitTag                  = this.ajaxQuitTag.bind(this) //realiza peticiones ajax-post para eliminar un tag de un producto o accesorio
 	    this.ajaxQuitAccessory            = this.ajaxQuitAccessory.bind(this) //realiza peticiones post-ajax para quitar un accesorio de un producto
 	}
+
+  /**
+  * Realiza una petición post que le retorna las marcas
+  */
+  getBrands(){
+    var opts = {headers: {'Accept': 'application/json',
+                           'Content-Type': 'application/json',
+                           'X-CSRF-TOKEN': this.props.token},
+                method:'POST'};
+
+    fetch(this.props.routeGetBrands, opts)
+      .then( res => res.json() )
+      .then( data => {this.setState({brands: data.brands})} )
+      .catch(e => console.error(`[request] ${this.props.routeGetBrands}`) )
+  }
+
+  /**
+  *Pide los tags y los establece en el state
+  */
+  getTags(){
+    this.props.tagController.getTags( data=>{
+      this.setState({allTags:data});
+    })
+  }
 
 	//maneja el onChange del input #createProductFatherCategory si este es otro, muestra
 	//cambia el state 'otherFather' por true para mostrar el  input que permite  agregar
@@ -658,36 +739,40 @@ class FormCreate extends React.Component
 		}
 
 		this.setState({'valueFathercate' : optSelected,
-			           'otherFather'     : optSelected == "otro" ? true : false,
-	                   'valCategory'     : optSelected == "otro" ? "otro" : "",
-	                   'otherCategory'   : optSelected == "otro" ? true : false,
-	                   'otherSubCategory': optSelected == "otro" ? true : false});
+			             'otherFather'     : optSelected == "otro" ? true : false,
+	                 'valCategory'     : optSelected == "otro" ? "otro" : "",
+	                 'otherCategory'   : optSelected == "otro" ? true : false,
+	                 'otherSubCategory': optSelected == "otro" ? true : false});
 	}
 
 	//evalua el state otherFather, si es true,retorna un input, para establecer el nombre
 	//de la nueva categoria padre
-	toggleInputOtherFatherCategory(){
+	inputOtherFatherCategory(){
 		if( this.state.otherFather ){
-			return <div className="row m-t-xs">
-  						<div className="input-field col s12">
-                    <input placeholder="Placeholder" name="nuevaCategoriaPadreCrearProducto" id="createProductNewFatherCategory" type="text" class="validate" required />
-                    <label htmlFor="nuevaCategoriaPadreCrearProducto">Nombre categoria padre</label>
-  						</div>
-  				   </div>
-		}
-		else{
-			return <div className="row m-t-xs">
-              <div className="input-field col s12">
-                <select name="categoriaCrearProducto" id={this.props.idSelectCategory} value={this.state.valCategory} onChange={this.handlerChangeCategory}>
-                  <option value="" disabled defaultValue>Categoria</option>
-                  {this.state.categories}
-                  <option value="otro">Otro</option>
-                </select>
-                <label htmlFor="categoriaCrearProducto">Categoria</label>
+			return  <div className="row m-t-xs">
+                <div className="input-field col s12">
+                      <input name="nuevaCategoriaPadreCrearProducto" id="createProductNewFatherCategory" type="text" className="validate" required />
+                      <label htmlFor="nuevaCategoriaPadreCrearProducto">Nombre categoria padre</label>
+    						</div>
               </div>
-        	  </div>
 		}
 	}
+
+  //renderiza el select de categoria
+  renderSelectCategory(){
+    if(!this.state.otherFather){
+      console.log(`[debug] renderizar categorias, state.categories: ${this.state.categories.length}`);
+      return <div className="row m-t-xs">
+              <div className="input-field col s12">
+                <select className="browser-default" name="categoriaCrearProducto" id={this.props.idSelectCategory} value={this.state.valCategory} onChange={this.handlerChangeCategory}>
+                  <option value="" disabled defaultValue>Categoria</option>
+                  {this.state.categories}
+                  <option value="otro">Otra categoria</option>
+                </select>
+              </div>
+        	  </div>
+    }
+  }
 
 	//retorna un array con los <options> por cada una de las categorias padres en la base de datos
 	renderOptionsFatherCategories(){
@@ -698,25 +783,21 @@ class FormCreate extends React.Component
 		return opts
 	}
 
-	//hace una peticion post-ajax que retorna las categorias de una categoriPadre
+	/**
+  * hace una peticion post que retorna las categorias de una categoriPadre
+  * crea los option y los establece en el state.categories, generando un re-render
+  * @param {int} id //id de la categoria padre.
+  * @return {void} realisa un setState que genera una actualización el los selects de categorias
+  */
 	ajaxGetCategories(id){
-		var opts = [];
-		$.ajax({
-			type:'POST',
-			url:this.props.routeGetCategories,
-			data:{id:id},
-			dataType:'JSON',
-				beforeSend:function(){
-
-				}.bind(this),
-				success:function(response){
-					response.categories.forEach( cate => {
-						opts.push(<option value={cate.id} key={"categoryOpt-"+cate.id}>{cate.name}</option>)
-					})
-					this.setState({categories:opts,
-					               subcategories:[]})
-				}.bind(this)
-		})
+    var opts = [];
+    this.props.categoryController.setCategories(id, data => {
+      data.forEach( cate => {
+        opts.push(<option value={cate.id} key={"categoryOpt-"+cate.id}>{cate.name}</option>)
+      })
+      this.setState({categories:opts,
+                     subcategories:[]})
+    });
 	}
 
 	//maneja el onCHange del input de categorias
@@ -736,22 +817,14 @@ class FormCreate extends React.Component
 
 	//hace un llamado ajax, para cargar las subcategorias
 	ajaxGetSubcategories(id){
-		$.ajax({
-			type:'POST',
-			url : this.props.routeGetSubCategories,
-			data:{id:id},
-			dataType:'JSON',
-				beforeSend:function(){
-
-				}.bind(this),
-				success:function(response){
-					var opts = []
-					response.subcategories.forEach( sub =>{
-						opts.push(<option value={sub.id} key={"optSubCat-"+sub.id}>{sub.name}</option>)
-					})
-					this.setState({subcategories:opts})
-				}.bind(this)
-		})
+    console.log(`[debug] subcategorias en FormCreate`);
+    this.props.subCategoryController.getSubcategories(id, data=>{
+      var opts = []
+      data.forEach( sub =>{
+        opts.push(<option value={sub.id} key={"optSubCat-"+sub.id}>{sub.name}</option>)
+      })
+      this.setState({subcategories:opts})
+    })
 	}
 
 	//evalua el state otherCategory, si es true,retorna un input, para establecer el nombre
@@ -759,7 +832,7 @@ class FormCreate extends React.Component
 	toggleInputOtherCategory(){
 		if( this.state.otherCategory ){
 			return <div className="row m-t-xs">
-                <div class="input-field col s12">
+                <div className="input-field col s12">
                   <input placeholder="Nombre categoria" type="text" className="validate" name="nuevaCategoriaCrearProducto" id="createProductNewCategory" required/>
                   <label htmlFor="nuevaCategoriaCrearProducto">Nombre categoria</label>
                 </div>
@@ -779,12 +852,11 @@ class FormCreate extends React.Component
 		if(!this.state.otherCategory){
 			return <div className="row m-t-xs">
     						<div className="input-field col s12">
-    							<select value={this.state.valsubcategory} name="subCategoriaCrearProducto" id="createProductSubCategory" onChange={this.handlerChangeSubCategory}>
+    							<select className="browser-default" value={this.state.valsubcategory} name="subCategoriaCrearProducto" id="createProductSubCategory" onChange={this.handlerChangeSubCategory}>
     								<option value="" disabled defaultValue>Sub-categoria</option>
     								{this.state.subcategories}
     								<option value="otro">Otro</option>
     							</select>
-                  <label htmlFor="subCategoriaCrearProducto">Sub-categoria</label>
     						</div>
     					</div>
 		}
@@ -812,7 +884,7 @@ class FormCreate extends React.Component
 	//renderizar los options de marcas
 	renderOptionsBrands(){
 		var opts = []
-		this.props.brands.forEach( brand => {
+		this.state.brands.forEach( brand => {
 			opts.push(<option value={brand.id} key={"optBrand-"+brand.id}>{brand.name}</option>)
 		})
 		return opts
@@ -841,7 +913,7 @@ class FormCreate extends React.Component
 	//renderiza los options de los tag
 	buildOptsTags(){
 		var opt = []
-		this.props.tags.forEach(tag => {
+		this.state.allTags.forEach(tag => {
 			opt.push(<option value={tag.id} key={"tagOpt-"+tag.id}>{tag.name}</option>)
 		})
 		return opt
@@ -870,7 +942,8 @@ class FormCreate extends React.Component
 	//renderiza un input para agregar más tags
 	toogleMoreTags(){
 		if(this.state.moreTags){
-			return <TagInput/>
+			return <InputTag onChipAdd={this.props.onChipAdd}
+                       onChipDelete={this.props.onChipDelete}/>
 		}
 	}
 
@@ -989,10 +1062,36 @@ class FormCreate extends React.Component
 		})
 	}
 
+  /**
+  * Inicializa los selects de materialize
+  */
+  initSelects(){
+    this.state.selects = document.querySelectorAll('select');
+    this.state.selectsInstances = M.FormSelect.init(this.state.selects, {});
+  }
+
 	componentDidMount(){
-    //:::::::::::::Selects :::::::::::::::::::::
-    $('select').formSelect();
+
+    this.getBrands() //cargar las marcas
+
+    //obtener los tags para renderizarlos en el select de tags
+    this.props.tagController.getTags( data=>{
+      this.setState({allTags:data});
+      setTimeout( ()=>{ //Una espera a que se rendericen los opts
+        this.initSelects(); ////inicializar los selects de materialize
+      },500)
+    })
+
+    this.props.brandController.getBrands( data=>{
+      this.setState({brands:data})
+      setTimeout( ()=>{ //Una espera a que se rendericen los opts
+        this.initSelects(); //inicializar los selects de materialize
+      },500)
+    })
+
     M.updateTextFields();
+
+
 
 		//:::::::::::::Sumernote:::::::::::::::::::
 		$('#'+this.props.idFieldDescription).summernote({
@@ -1007,15 +1106,6 @@ class FormCreate extends React.Component
 						// ['para', ['ul', 'ol', 'paragraph']],
 						 //['insert',['link','video','table']],
 						]
-		});
-
-		//::::::::::::::::::::Chosen select:::::::::::::::::::::::::::::
-		$("#"+this.props.idFielTags).chosen({width: "100%"})
-
-		//poner listener al select multiple de tags
-		$("#"+this.props.idFielTags).chosen().change( () =>{
-			var tag = $("#"+this.props.idFielTags).val()
-			this.setState({valueTags:tag})
 		});
 
 		helper.ponerPuntosEnNumeros()
@@ -1077,138 +1167,142 @@ class FormCreate extends React.Component
 
 	render(){
 		return(<form id={this.props.formId} onSubmit={this.props.submitForm} encType="multipart/form-data">
-				<div className="row">
-					<div className="col s12 m4">
+    				<div className="row">
+    					<div className="col s12 m4">
 
-						{this.renderInputType()}
+    						{this.renderInputType()}
 
-						<div className="row">
-                <div className="input-field col s12">
-                   <select name="categoriaPadreCrearProducto" id="createProductFatherCategory" value={this.state.valueFathercate} onChange={this.handlerChangeFatherCategory}>
-                     <option value="" disabled defaultValue>Categoria padre</option>
-                     {this.renderOptionsFatherCategories()}
-                     <option value="otro">Otro</option>
-                   </select>
-                   <label>Categoria padre</label>
+    						<div className="row">
+                    <div className="input-field col s12">
+                       <select className="browser-default" name="categoriaPadreCrearProducto" id="createProductFatherCategory" value={this.state.valueFathercate} onChange={this.handlerChangeFatherCategory}>
+                         <option value="" disabled defaultValue>Categoria padre</option>
+                         {this.renderOptionsFatherCategories()}
+                         <option value="otro">Otro</option>
+                       </select>
+                    </div>
+    						</div>
+
+    						{this.inputOtherFatherCategory()}
+
+                {this.renderSelectCategory()}
+
+    						{this.toggleInputOtherCategory()}
+
+    						{this.renderSelectSubCategory()}
+
+    						{this.toggleInputOtherSubCategory()}
+
+
+    						<div className="row m-t-xs">
+    							<div className="input-field col s12">
+    								<textarea className="materialize-textarea" name="metaDescripcionCrearProducto" id="createProductDescriptionMeta" value={this.state.valueMetaDescription} onChange={this.handlerChangeMetaDescription} required></textarea>
+                    <label htmlFor="metaDescripcionCrearProducto">Meta description:</label>
                 </div>
-						</div>
+    						</div>
 
-						{this.toggleInputOtherFatherCategory()}
+    						{this.renderTags()}
 
-						{this.toggleInputOtherCategory()}
+    						<div className="row m-t-xs">
+    							<div className="input-field col s12">
+    								    <select className="" multiple id={this.props.idFielTags} name="tagsCrearProducto[]" defaultValue={this.state.valueTags} >
+    						            {this.buildOptsTags()}
+    						        </select>
+                        <label htmlFor="metaDescripcionCrearProducto">Tags:</label>
+    							</div>
+    						</div>
 
-						{this.renderSelectSubCategory()}
+    						<div className="row m-t-xs">
+    							<div className="col s12">
+    								<label>Agregar tags: </label>
+                    <div className="switch">
+                      <label>
+                        { /*Off*/}
+                        <input type="checkbox" name="crearTagsCrearProducto" id={this.props.switchMoreTagsId} defaultChecked={this.state.valMoreTags} onClick={this.handlerChangeMoreTags}/>
+                        <span className="lever"></span>
+                        { /*On*/}
+                      </label>
+                    </div>
+                  </div>
+    						</div>
 
-						{this.toggleInputOtherSubCategory()}
-
-
-						<div className="row m-t-xs">
-							<div className="input-field col s12">
-								<textarea className="materialize-textarea" name="metaDescripcionCrearProducto" id="createProductDescriptionMeta" value={this.state.valueMetaDescription} onChange={this.handlerChangeMetaDescription} required></textarea>
-                <label htmlFor="metaDescripcionCrearProducto">Meta description:</label>
-            </div>
-						</div>
-
-						{this.renderTags()}
-
-						<div className="row m-t-xs">
-							<div className="input-field col s12">
-								    <select id={this.props.idFielTags} name="tagsCrearProducto[]" defaultValue={this.state.valueTags} className="chosen-select" data-placeholder="Selcciona los tags" multiple>
-						            {this.buildOptsTags()}
-						        </select>
-                    <label htmlFor="metaDescripcionCrearProducto">Tags:</label>
-							</div>
-						</div>
-
-						<div className="row m-t-xs">
-							<div className="col s12">
-								<label>Agregar tags: </label>
-                <div className="switch">
-                  <label>
-                    { /*Off*/}
-                    <input type="checkbox" name="crearTagsCrearProducto" id={this.props.switchMoreTagsId} defaultChecked={this.state.valMoreTags} onClick={this.handlerChangeMoreTags}/>
-                    <span className="lever"></span>
-                    { /*On*/}
-                  </label>
-                </div>
-              </div>
-						</div>
+    						{this.toogleMoreTags()}
 
 
+    					</div>
 
-						{this.toogleMoreTags()}
+    					<div className="col s12 m8">
 
+    						<div className="row m-t-xs">
+    							<div className="input-field col s12">
+    								<input name="nombreCrearProducto" id="createProductName" value={this.state.valueName} onChange={this.handlerChangeName} required/>
+                    <label htmlFor="createProductName" className="active">Nombre</label>
+                  </div>
+    						</div>
 
-					</div>
+    						<div className="row m-t-xs">
+    							<div className="col s12">
+    								<textarea name="descripcionCrearProducto" id={this.props.idFieldDescription} required></textarea>
+                    <label htmlFor={this.props.idFieldDescription}></label>
+    						</div>
+    						</div>
 
-					<div className="col s12 m8">
+    						<div className="row m-t-xs">
+    							<div className="input-field col s12">
+                    <select className="" name="marcaCrearProducto" id="createProductMarca" value={this.state.valueMarca} onChange={this.handlerChangeBrand}>
+    									<option value="" disabled defaultValue>Marca</option>
+    									{this.renderOptionsBrands()}
+    									<option value="otra">Otra</option>
+    								</select>
+    							</div>
+    						</div>
 
-						<div className="row m-t-xs">
-							<div className="input-field col s12">
-								<input name="nombreCrearProducto" id="createProductName" value={this.state.valueName} onChange={this.handlerChangeName} required/>
-                <label htmlFor="createProductName" className="active">Nombre</label>
-              </div>
-						</div>
+    						{this.toogleNewBrand()}
 
-						<div className="row m-t-xs">
-							<div className="col s12">
-								<textarea name="descripcionCrearProducto" id={this.props.idFieldDescription} required></textarea>
-                <label htmlFor={this.props.idFieldDescription}></label>
-						</div>
-						</div>
-
-						<div className="row m-t-xs">
-							<div className="input-field col s12">
-                <select name="marcaCrearProducto" id="createProductMarca" value={this.state.valueMarca} onChange={this.handlerChangeBrand}>
-									<option value="" disabled defaultValue>Marca</option>
-									{this.renderOptionsBrands()}
-									<option value="otra">Otra</option>
-								</select>
-								<label htmlFor="createProductMarca">Marca</label>
-							</div>
-						</div>
-
-						{this.toogleNewBrand()}
-
-						<div className="row m-t-xs">
-							<div className="input-field col s12">
-                <i className ="material-icons prefix">attach_money</i>
-                <input className="form-control ponerPuntos" name="precioCrearProducto" id={this.props.editOrCreate == "create" ? "createProductPrice" : "editProductPrice"} value={this.state.valuePrice} onChange={this.handlerChangePrice} required/>
-                <label className="active" htmlFor={this.props.editOrCreate == "create" ? "createProductPrice" : "editProductPrice"}>Precio</label>
-              </div>
-						</div>
+    						<div className="row m-t-xs">
+    							<div className="input-field col s12">
+                    <i className ="material-icons prefix">attach_money</i>
+                    <input className="form-control ponerPuntos" name="precioCrearProducto" id={this.props.editOrCreate == "create" ? "createProductPrice" : "editProductPrice"} value={this.state.valuePrice} onChange={this.handlerChangePrice} required/>
+                    <label className="active" htmlFor={this.props.editOrCreate == "create" ? "createProductPrice" : "editProductPrice"}>Precio</label>
+                  </div>
+    						</div>
 
 
-						<div className="row m-t-xs">
-							<div className="col s12">
-								<label>Mostrar precio: </label>
+    						<div className="row m-t-xs">
+    							<div className="col s12">
+    								<label>Mostrar precio: </label>
 
-                <div className="switch">
-                  <label>
-                    { /*Off*/ }
-                    <input type="checkbox" name="mostrarPrecioCrearProducto" defaultChecked={this.state.valueCheckPrice} id={this.props.switchShowPriceId}/>
-                    <span className="lever"></span>
-                    { /*On*/ }
-                  </label>
-                </div>
+                    <div className="switch">
+                      <label>
+                        { /*Off*/ }
+                        <input type="checkbox" name="mostrarPrecioCrearProducto" defaultChecked={this.state.valueCheckPrice} id={this.props.switchShowPriceId}/>
+                        <span className="lever"></span>
+                        { /*On*/ }
+                      </label>
+                    </div>
 
-							</div>
-						</div>
+    							</div>
+    						</div>
 
-						{this.renderInputId()}
-						{this.renderSwitchShowProduct()}
+    						{this.renderInputId()}
+    						{this.renderSwitchShowProduct()}
 
-					</div>
+    					</div>
 
-				</div>
-				<div className="row m-t">
-					<div className="col-md-12">
-						<input type="submit" className="btn btn-primary pull-right" value="Guardar"/>
-					</div>
-				</div>
+    				</div>
+    				<div className="row m-t">
+    					<div className="col-md-12">
+    						<input type="submit" className="btn btn-primary pull-right" value="Guardar"/>
+    					</div>
+    				</div>
 			   </form>)
 	}
 }
+
+
+
+
+
+
 
 class TagInput extends React.Component
 {
@@ -1670,6 +1764,10 @@ class RowInputPic extends React.Component
     }
 }
 
+
+
+
+
 //modal para editar un producto
 class ModalEdit extends React.Component
 {
@@ -1679,12 +1777,11 @@ class ModalEdit extends React.Component
 	                                routeGetCategories={this.props.routeGetCategories}
 	                                routeGetSubCategories={this.props.routeGetSubCategories}
 	                                routeProductsOfAccessory={this.props.routeProductsOfAccessory}
+                                  routeGetBrands={this.props.routeGetBrands}
 	                                quitProductOfAccessory={this.props.quitProductOfAccessory}
 	                                quitAccessoryOfProduct={this.props.quitAccessoryOfProduct}
 	                                routeQuitTag={this.props.routeQuitTag}
 	                                getAccessories={this.props.getAccessories}
-	                                brands={this.props.brands}
-	                                tags={this.props.tags}
 	                                maxUpload={this.props.maxUpload}
 	                                submitForm={this.props.submitForm}
 	                                defaultImg={this.props.defaultImg}
@@ -1700,7 +1797,10 @@ class ModalEdit extends React.Component
 	                                switchAccessory="editAccesory"
 	                                switchHaveAccesories="editHaveAccesories"
 	                                editOrCreate="edit"
-	                                productEdit={this.props.productEdit}/>
+	                                productEdit={this.props.productEdit}
+                                  token={this.props.token}
+                                  tagController={this.props.tagController}
+                                  brandController={this.props.brandController}/>
 		}
 		else{
 			return <FormEditImages productEdit={this.props.productEdit}
@@ -1860,17 +1960,26 @@ class FormEditImages extends React.Component
 
 
 
-/*
-setTimeout(()=>{
-	ReactDOM.render(<Ecommerce fatherCategories={fatherCategories}
-		                  brands={brands}
-		                  tags={tags}
-		                  routes={routes}
-		                  defaultImg={defaultImg}
-		                  maxUpload={maxUpload}
-		                  products={products}
-		                  prev={prev}/>, document.getElementById('ReactRoot'))
-},1000)
-*/
+
+/**
+ * Componente para crear tags
+ * @prop {function} onChipAdd //callback que se ejecuta cuando se agrega un tag
+ * @prop {function} onChipDelete // callback que se ejecuta cuando de elimina un tag
+ */
+ class InputTag extends React.Component
+ {
+   componentDidMount(){
+     //:::::::::::::Tags:::::::::::::::::::::::::
+     var inputTag = document.querySelectorAll('.chips');
+     var inputTagInstance = M.Chips.init(inputTag, {placeholder:"agregar tags",
+                                                    secondaryPlaceholder:"+ tag",
+                                                    onChipAdd: this.props.onChipAdd,
+                                                    onChipDelete: this.props.onChipDelete});
+   }
+
+   render(){
+     return(<div className="chips" id="newTags"></div>)
+   }
+ }
 
 export default Ecommerce

@@ -29,6 +29,15 @@ Route::get('/dashboard/{path?}', [
     'where' => ['path' => '.*']
 ]);
 
+Route::group( ["prefix" => "products"], function(){
+  Route::post('fathercategories', 'ProductsController@responseFatherCategories')->name('fathercategories');
+  Route::post('categories', 'ProductsController@responseGetCategories')->name('getcategories');
+  Route::post('subcategories', 'ProductsController@responseGetSubCategories')->name('getsubcategories');
+  Route::post('storage', 'ProductsController@storage')->name('products.storage');
+  Route::post('brands','ProductsController@responseGetBrands')->name('products.brands');
+  Route::post('tags', 'ProductsController@responseGetTags')->name('products.tags');
+});
+
 //___________________________Ecommerce_public__________________________________
   Route::group(["prefix"=>"ecotienda"],function(){
     Route::get('/',                       'ShopController@index')->name('shop');//Retorna a la página principal

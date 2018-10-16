@@ -79,10 +79,8 @@ class Main extends React.Component{
                   </nav>
 
                   <div>
-                    <Route path="/dashboard/ecommerce" render={ (props) => <Ecommerce {...props} fatherCategories={this.props.fatherCategories}
-                                                                                                 brands={this.props.brands}
-                                                                                                 tags={tags}
-                                                                                                 routes={this.props.routes}
+                    <Route path="/dashboard/ecommerce" render={ (props) => <Ecommerce {...props} routes={this.props.routes}
+                                                                                                 token={this.props.token}
                                                                                                  defaultImg={this.props.defaultImg}
                                                                                                  maxUpload={this.props.maxUpload}
                                                                                                  products={this.props.products}
@@ -104,9 +102,6 @@ setTimeout(()=>{
                         token={token}
 
                         fatherCategories={fatherCategories}
-  		                  brands={brands}
-  		                  tags={tags}
-  		                  routes={routes}
   		                  defaultImg={defaultImg}
   		                  maxUpload={maxUpload}
   		                  products={products}

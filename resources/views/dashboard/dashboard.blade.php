@@ -10,7 +10,6 @@
 
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/plugins/summernote-master/dist/summernote.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/plugins/summernote-master/dist/summernote-bs3.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('assets/plugins/chosen/bootstrap-chosen.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/plugins/bootstrap-tagsinput-latest/src/bootstrap-tagsinput.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/plugins/cropperjs-master/src/css/cropper.css') }}">
 
@@ -72,7 +71,6 @@
 
     <script type="text/javascript" src="{{ asset('assets/plugins/summernote-master/dist/summernote.js') }}"></script>
     <script type="text/javascript" src="{{ asset('assets/plugins/summernote-master/dist/lang/summernote-es-ES.js') }}"></script>
-    <script type="text/javascript" src="{{ asset('assets/plugins/chosen/chosen.jquery.js') }}"></script>
     <script type="text/javascript" src="{{ asset('assets/plugins/bootstrap-tagsinput-latest/src/bootstrap-tagsinput.js') }}"></script>
 
     <script type="text/javascript">
@@ -81,17 +79,20 @@
                     profileImg:"{!! asset('assets/img/camilo.jpg') !!}"},
           images = {backgroundMenu : "{!! asset('assets/img/lines.jpg') !!}"},
           token  = "{!! csrf_token() !!}",
-          routes = {logout : "{!! route('logout') !!}"};
+          routes = {logout : "{!! route('logout') !!}",
+                    getFatherCategories : "{!! route('fathercategories') !!}",
+                    getCategories: "{!! route('getcategories') !!}",
+                    getSubcategories : "{!! route('getsubcategories') !!}",
+                    storage : "{!! route('products.storage') !!}",
+                    getBrands : "{!! route('products.brands') !!}",
+                    getTags : "{!! route('products.tags') !!}"};
 
           //estas variables es mejor setearlas cuando se cargue el componente con un ajax o un fetch
           var fatherCategories = {!!$fatherCategories!!},
-              brands           = {!!$brands!!},
-              tags             = {!!$tags!!},
               maxUpload        = "{{$maxUpload}}",
               products         = {!!$products!!},
               defaultImg       = "{{ asset('image/ecommerce/products/default.png') }}",
-              prev       			 = "{!!$prev!!}",
-              routes = {logout : "{!! route('logout')!!}" }
+              prev       			 = "{!!$prev!!}";
     </script>
 
     <script src="{{asset('assets/js/components/dashboard/compiled.min.js')}}"></script>
