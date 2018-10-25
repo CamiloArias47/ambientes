@@ -30,12 +30,11 @@ class ProductsController extends Controller
         $lastP            = end($products);
 
 
-       // dd($products, $ProductsL, $lastP);
       return view('dashboard.dashboard')->with(['fatherCategories' => json_encode($fatherCategories),
                                                 'brands'           => json_encode($brands),
                                                 'tags'             => json_encode($tags),
                                                 'products'         => json_encode($products),
-                                                'prev'             => $this->thereIsMorePrevNext($lastP["created_at"],"<"),
+                                                'prev'             => $this->thereIsMorePrevNext($lastP[0]["created_at"],"<"),
                                                 'maxUpload'        => 20,
                                                 ]);
     }
@@ -45,18 +44,13 @@ class ProductsController extends Controller
     public function getLastProducts()
     {
         $products    = Shop_product::orderBy("created_at","desc")->take('20')->get(); //tomamos los ultimos 20 productos
-        $accessories = Shop_accessory::orderBy("created_at","desc")->take('20')->get(); //tomamos los ultimos 20 accesorios
-
         $products    = $this->formatProducts($products);
-        $accessories = $this->formatAccessories($accessories);
 
-        $productos = $this->joinProductsAccessoriesOrder($products, $accessories, "<");
-
-        if( count($productos) > 20){
-            $productos = array_slice($productos,0,20);
+        if( count($products) > 20){
+            $products = array_slice($products,0,20);
         }
 
-        return $productos;
+        return $products;
     }
 
     //retorna true si existen más productos antes o despues de la fecha que se le de por parametro
@@ -86,11 +80,11 @@ class ProductsController extends Controller
             $product->shop_tags;
             $product->shop_accessories;
 
-            $product->detail = route('ecommerce.detail',$product->id);
+            $product->detail = "Ruta a los detalles del producto";
 
             if(count($product->shop_images) > 0){
                 foreach ($product->shop_images as $image) {
-                    $image->route = asset("image/ecommerce/products/".$image->route);
+                    $image->route = asset("assets/img/products/".$image->route);
                 }
             }
         }
@@ -117,57 +111,371 @@ class ProductsController extends Controller
         return $accessories;
     }
 
-    //une un array de productos y uno de accesorios y los ordena por la fecha de creaccion
-    //|($products, $accessories, $order)  -> array
-    //$products                                                      == array de Shop_product
-    //$accessories                                                   == array de Shop_accessory
-    //$order                                                         == string "<",">"
-    public function joinProductsAccessoriesOrder($products, $accessories, $order)
-    {
-        $elementos = [];
-
-        foreach ($products as $product) {
-            $elementos[] = $product;
-        }
-
-        foreach ($accessories as $accessory) {
-            $elementos[] = $accessory;
-        }
-
-        return $this->burbuja($elementos, $order);
-    }
 
     //ordenamiento burbuja
-  //retorna un array de productos o accesorios ordenados por el campo created_at
-  //burbuja($array, $order) -> array
-  //$array                  == array  Shop_product || Shop_accessory
-  //$order                  == string "<",">"
-  public function burbuja($array, $order)
-  {
-      for($i=1; $i<count($array); $i++)
-      {
-          for($j=0; $j < count($array)-$i; $j++)
-          {
-              if($order == "<"){
-                  if($array[$j]["created_at"] < $array[$j+1]["created_at"]) {
-                      $k=$array[$j+1];
-                      $array[$j+1]=$array[$j];
-                      $array[$j]=$k;
-                  }
+    //retorna un array de productos o accesorios ordenados por el campo created_at
+    //burbuja($array, $order) -> array
+    //$array                  == array  Shop_product || Shop_accessory
+    //$order                  == string "<",">"
+    public function burbuja($array, $order)
+    {
+        for($i=1; $i<count($array); $i++)
+        {
+            for($j=0; $j < count($array)-$i; $j++)
+            {
+                if($order == "<"){
+                    if($array[$j]["created_at"] < $array[$j+1]["created_at"]) {
+                        $k=$array[$j+1];
+                        $array[$j+1]=$array[$j];
+                        $array[$j]=$k;
+                    }
+                }
+                else{
+                    if($array[$j]["created_at"] > $array[$j+1]["created_at"]) {
+                        $k=$array[$j+1];
+                        $array[$j+1]=$array[$j];
+                        $array[$j]=$k;
+                    }
+                }
+
+            }
+        }
+
+        return $array;
+    }
+
+    //se encarga de validar la informacion del formulario que crea un producto
+    //validateStorage($request)  -> boolean || response()
+    public function validateStorage(Request $request)
+    {
+        $validator = Validator::make($request->all(), ["categoriaPadreCrearProducto"      => "required",
+                                                       "metaDescripcionCrearProducto"     => "required",
+                                                       "tagsCrearProducto.*"              => "numeric",
+                                                       "agregarTagsCrearProducto"         => "required_if:crearTagsCrearProducto,on",
+                                                       "nombreCrearProducto"              => "required",
+                                                       "descripcionCrearProducto"         => "required",
+                                                       "marcaCrearProducto"               => "required",
+                                                       "nombreMarcaCrearProducto"         => "required_if:marcaCrearProducto,otra",
+                                                       "precioCrearProducto"              => "required|numeric",
+                                                   ]);
+
+        $validator->after(function ($validator) use ($request){
+            if($request->categoriaPadreCrearProducto == "otro"){
+                if(!($request->categoriaPadreCrearProducto == "otro" && ($request->nuevaCategoriaPadreCrearProducto != "" && $request->nuevaCategoriaCrearProducto != "" && $request->nuevaSubCategoriaCrearProducto != ""))){
+                    $validator->errors()->add('Completa las categorias', 'Verifica que estableciste una nueva categoria padre, categoria y subcategoria');
+                }
+
+                if($request->nuevaCategoriaPadreCrearProducto != ""){
+                    if( Shop_fathercategory::where('name','=',$request->nuevaCategoriaPadreCrearProducto)->count() > 0 ){
+                        $validator->errors()->add('Categoria padre existente', 'Ya existe una categoria padre con ese nombre');
+                    }
+                }
+            }
+
+            //verificar si establecio subcategoria
+            if($request->subCategoriaCrearProducto == "" && $request->nuevaSubCategoriaCrearProducto == ""){
+                if($request->editProduct_id != ""){
+                    $message = "El producto debe tener subcategoria, intenta cambiar la categoria por otra diferente y nuevamente seleciona la categoria a la que pertenece asi se cargaran las subcategorias";
+                }
+                else{
+                    $message = "El producto debe tener una subcategoria";
+                }
+
+                $validator->errors()->add('No se establecio una subcategoria', $message);
+            }
+
+
+            //$haveAccesories = false;
+
+            //si esta editando un producto,
+            if($request->editProduct_id != ""){
+                $product = Shop_product::find($request->editProduct_id); //si es un producto el que esta editando
+                $haveTags = (count($product->shop_tags) > 0) ? true : false; //si tiene tags le ponemos true
+            }
+            else{
+                $haveTags = false; //en caso de que esta creando un producto o accesorio entonces no tiene tags aún, le ponemos false
+            }
+
+            if(!$haveTags && $request->crearTagsCrearProducto == "" && count($request->tagsCrearProducto) == 0){
+                $validator->errors()->add('Agrega tags', 'Debes agregar tags al producto');
+            }
+        });
+
+        if($validator->fails()){
+            return response()->json(["saved" => false, "errors" => $validator->errors()->all()]);
+        }
+
+        return true;
+    }
+
+    //maneja el guardado de categorias, si agrega una nueva, si no retorna la que selecciono
+    //handlerStorageClasification($request) -> array       ["subcategoria_id" => null||int, "errors" => array]     Si es null, no guardo alguna clasificacion
+    //$request                              == Request     Información enviada en la peticion, (formulario)
+    public function handlerStorageClasification(Request $request)
+    {
+        $save_father       = ($request->categoriaPadreCrearProducto == "otro") ? true : false; //indica si se debe guardar la categoria padre
+        $save_category     = false; //indicara si se debe giuardar la categoria
+        $save_subcategory  = false; //indica si se debe guardar la subcategoria
+        $errors            = ["ok"];
+        $subcategoria_id   = null;
+
+        if($request->categoriaCrearProducto == "otro"){ //si selecciono otra categoria
+             $save_category = true; //indica que debemos guardar la categoria
+             $father_id = $request->categoriaPadreCrearProducto; //convetimos esta variable en el id que el usuario selecciono
+        }
+
+        if($request->subCategoriaCrearProducto == "otro"){ //si selecciono agregar otra subcategoria
+             $save_subcategory = true; //se le indica que se debe crear una subcategoria
+             $categoria_id     = $request->categoriaCrearProducto; //esta es la categoria que selecciono el usuario
+        }
+        else{
+            $subcategoria_id = $request->subCategoriaCrearProducto;
+        }
+
+        if($save_father){ //verificamos si debemos guardar la categoria padre
+            $saveFather = $this->storageFatherCategory($request->nuevaCategoriaPadreCrearProducto);
+            if($saveFather["saved"]){ //si guardo la categoria padre
+                $father_id = $saveFather["fatherCategory"]["id"];
+                $save_category = true;
+            }
+            else{ //si no guardo la categoria padre
+                $errors = ["No fue posible guardar la categoria padre"];
+            }
+        }
+
+        if($save_category){
+            if( !$this->categoryExist($father_id, $request->nuevaCategoriaCrearProducto) ){
+                $saveCate = $this->storageCategoria($father_id, $request->nuevaCategoriaCrearProducto);
+                if($saveCate["saved"]){ //si guarda la categoria
+                    $save_subcategory = true;
+                    $categoria_id = $saveCate["category"]["id"];
+                }
+                else{
+                    $errors = ["No fue posible guardar la categoria"];
+                }
+            }
+            else{
+                $errors = ["Ya existe una categoria con ese nombre"];
+            }
+        }
+
+        if($save_subcategory){
+            if( !$this->subcategoryExist($categoria_id, $request->nuevaSubCategoriaCrearProducto) ){
+                $saveSub = $this->storageSubCategory($categoria_id, $request->nuevaSubCategoriaCrearProducto);
+                if( $saveSub["saved"]){ //si guarda la subcategoria
+                    $subcategoria_id = $saveSub["subcategory"]["id"]; //guardamos el id de la subcategoria creada
+                }
+                else{
+                    $errors = ["No fue posible guardar la subcategoria"];
+                }
+            }
+            else{
+                $errors = ["Ya existe una sub-categoria con ese nombre"];
+            }
+        }
+
+        return array("subcategoria_id" => $subcategoria_id, "errors" =>  $errors);
+    }
+
+    //crea una categoria padre
+    //storageFatherCategory($name) -> array     ["saved" => boolean, "fatherCategory" => Shop_fathercategory || null]
+    //$name                        == string    Nombre de la categoria padre
+    public function storageFatherCategory($name){
+        $fatherCategory = new Shop_fathercategory;
+        $fatherCategory->name = $name;
+        if( $fatherCategory->save() ){
+            return array("saved" => true, "fatherCategory" => $fatherCategory);
+        }
+
+        return array("saved" => false, "fatherCategory" => null);
+    }
+
+    //valida si existe una categoria de una categoria padre con ese nombre
+    //categoryExist($fatherCate_id, $name) -> boolean  Retorna true si existe.
+    //$fatherCate_id                       == int      id de la categoria padre
+    //$name                                == string   Nombre de la categoria
+    public function categoryExist($fatherCate_id, $name){
+        if(Shop_category::where("shop_fathercategory_id","=",$fatherCate_id)->where("name","=",$name)->count() > 0){
+            return true;
+        }
+
+        return false;
+    }
+
+    //guarda una categoria
+    //storageCategoria($fatherCate_id, $name) -> array     ["saved" => boolean, "category" => Shop_category || null]    True si guarda la
+    //$fatherCate_id                          == int       Id de la categoria padre
+    //$name                                   == string    Nombre de la categoria a crear
+    public function storageCategoria($fatherCate_id, $name)
+    {
+        $categoria = new Shop_category;
+        $categoria->shop_fathercategory_id = $fatherCate_id;
+        $categoria->name                   = $name;
+        if( $categoria->save() ){
+            return array("saved" => true, "category" => $categoria);
+        }
+
+        return array("saved" => false, "category" => null);
+    }
+
+    //valida si existe una sub-categoria de una categoria con ese nombre
+    //subcategoryExist($cate_id, $name) -> boolean  Retorna true si existe.
+    //$cate_id                          == int      id de la categoria padre
+    //$name                             == string   Nombre de la categoria
+    public function subcategoryExist($cate_id, $name){
+        if(Shop_subcategory::where("shop_category_id","=",$cate_id)->where("name","=",$name)->count() > 0){
+            return true;
+        }
+
+        return false;
+    }
+
+    //guarda una subcategoria
+    //storageSubCategory($category_id, $name)  -> Array   ["saved" => boolean, "subcategory" => Shop_subcategory || null]  True si lo guarda
+    //$category_id                             == int     Id de la categoria padre
+    //$name                                    == string  Nombre de la subcategoria
+    public function storageSubCategory($category_id, $name)
+    {
+        $sub = new Shop_subcategory;
+        $sub->shop_category_id = $category_id;
+        $sub->name             = $name;
+
+        if( $sub->save() ){
+          return array("saved" => true, "subcategory" => $sub);
+        }
+
+        return array("saved" => false, "subcategory" => null);
+    }
+
+    //maneja el guardado de las marcas si el usuario agrega una nuevA, de lo contrario retorna el id de la marca
+    //handlerStorageBrands($request) -> array   ["marca_id" => int||null, "errors" => array]   marca_id si es null, es por que no guarda la marca
+    public function handlerStorageBrands(Request $request)
+    {
+        $save_brand = ($request->marcaCrearProducto == "otra") ? true : false; //indica si se debe guardar la marca
+        $errors     = ["Ok"];
+        $marca_id   = null;
+
+        if($save_brand){ //si hay que crear una nueva marca
+            $saveBrand = $this->storageBrand($request->nombreMarcaCrearProducto);
+            if($saveBrand["saved"]){
+                $marca_id = $saveBrand["brand"]["id"];
+            }
+            else{
+                $errors = ["No fue posible guardar la marca"];
+            }
+        }
+        else{
+            $marca_id = $request->marcaCrearProducto;
+        }
+
+        return array("marca_id" => $marca_id, "errors" => $errors);
+    }
+
+    //guarda marcas
+    //storageBrand($name) -> array  ["saved" => boolean, "brand" => Shop_brand || null]
+    //$name               == string Nombre de la marca
+    public function storageBrand($name)
+    {
+        $brand = new Shop_brand;
+        $brand->name = $name;
+        if( $brand->save() ){
+            return array("saved" => true, "brand" => $brand);
+        }
+
+        return array("saved" => false, "brand" => null);
+    }
+
+    //guarda tags, si encuentra uno igual, lo agrega al array de retorno
+    //saveTags($tags) -> Array  [Shop_tag]
+    //$tags           == Array  ["string"]  Nombres de los nuevos tag
+    public function saveTags($tags)
+    {
+        $tagsSave = [];
+        if( count($tags) > 0 ){
+            for( $i = 0; $i < count($tags); $i++) {
+
+              if(Shop_tag::where("name","=",$tags[$i]->{'tag'})->count() == 0){
+                $newTag = new Shop_tag;
+                $newTag->name = $tags[$i]->{'tag'};
+                if( $newTag->save() ){
+                  $tagsSave[] = $newTag;
+                }
               }
               else{
-                  if($array[$j]["created_at"] > $array[$j+1]["created_at"]) {
-                      $k=$array[$j+1];
-                      $array[$j+1]=$array[$j];
-                      $array[$j]=$k;
-                  }
+                $tagsSave[] = Shop_tag::where("name","=",$tags[$i]->{'tag'})->first();
               }
+            }
+        }
 
-          }
-      }
+        return $tagsSave;
+    }
 
-      return $array;
-  }
+    //se encarga de guardar un producto en la base de datos
+    //saveProduct($request, $marca_id, $subcategoria_id, $tags) -> array    ["saved" => boolean, "product" => Shop_product||null]
+    //$request                                                  == Request
+    //$marca_id                                                 == int      Id de la marca del producto
+    //$subgategoria_id                                          == int      Id de la subcategoria
+    //$tags                                                     == array    tags nuevos creados por el usuario, si no se pasa null
+    public function saveProduct(Request $request, $marca_id, $subcategoria_id, $tags)
+    {
+        $saved = false;
+        $product = "";
+
+        $product =  new Shop_product;
+        $product->name                = $request->nombreCrearProducto;
+        $product->description         = $request->descripcionCrearProducto;
+        $product->meta_description    = $request->metaDescripcionCrearProducto;
+        $product->shop_brand_id       = $marca_id;
+        $product->price               = $request->precioCrearProducto;
+        $product->shop_subcategory_id = $subcategoria_id;
+        $product->showproduct         = "no";
+        $product->showprice           = ($request->mostrarPrecioCrearProducto == "on")?"si":"no";
+
+        if( $product->save() ){
+            if( count($request->tagsCrearProducto) > 0 ){ //relacionamos los tags que selecciono
+                foreach ($request->tagsCrearProducto as $tag) {
+                    $product->shop_tags()->attach($tag); //creamos el registro en la table pivot
+                }
+            }
+
+            if( $tags !== null ){  //adjuntamos los tags que creeo
+                foreach ($tags as $newTag) {
+                    $product->shop_tags()->attach($newTag["id"]); //creamos el registro en la table pivot
+                }
+            }
+
+            if($request->AccessoriesProducto != ""){  //adjuntamos los accesorios que eligó
+                foreach ($request->AccessoriesProducto as $accessory) {
+                    $product->shop_accessories()->attach($accessory);
+                }
+            }
+
+            $product->type = "product";
+            $saved = true;
+        }
+
+        return array("saved" => $saved, "product" => $product);
+    }
+
+
+    /**
+    *Quita vocales con tildes, ñ y espacios de un string.
+    * @param {string} $nombre //cadena a quitar caracteres
+    */
+    public function sinCaracteresRaros($nombre)
+    {
+        $raros = array(" ", "ñ", "Ñ", "á", "é", "í", "ó", "ú", "Á", "É", "Í", "Ó", "Ú");
+        $norma = array("", "n", "N", "a", "e", "i", "o", "u", "A", "E", "I", "O", "U");
+        $nameespacios       = str_replace($raros, $norma, $nombre);
+        return $nameespacios;
+    }
+
+
+
+
+
+
+
 
   /*
   |--------------------------------------------------------------------------
@@ -177,6 +485,18 @@ class ProductsController extends Controller
   | Peticiones http
   |
   */
+
+  /**
+  * maneja peticiones post, retorna unjson con los ultimos productos creados
+  */
+  public function getProducts(Request $request)
+  {
+      $products         = $this->getLastProducts();
+      $lastP            = end($products);
+
+      return response()->json(["products" => $this->getLastProducts(),
+                               "prev"     => $this->thereIsMorePrevNext($lastP[0]["created_at"],"<")]);
+  }
 
   public function responseFatherCategories(Request $request)
   {
@@ -214,12 +534,12 @@ class ProductsController extends Controller
     return response()->json(['tags' => $tags]);
   }
 
-  //maneja peticiones post para almacenar un producto
+  /**
+  *maneja peticiones post para almacenar un producto
+  */
   public function storage(Request $request)
   {
-    return response()->json(['request' => $request->all(), 'tags' => json_decode($request->nuevosTags)]);
-    /*  $saved = false;
-      $type  = false;
+      $saved = false;
 
       if( !is_bool($this->validateStorage($request)) ){ //validar la información, si no retorna un boleano, la validacion falló
           return $this->validateStorage($request);
@@ -246,41 +566,72 @@ class ProductsController extends Controller
       }
 
       if($save_tags){
-          $tags = $this->saveTags($request->agregarTagsCrearProducto);
+          $tags = $this->saveTags( json_decode($request->agregarTagsCrearProducto));
       }
 
       if( isset($subcategoria_id) && isset($marca_id) ){
-          //si es un accesorio
-          if($request->accesorioCrearProducto != "" && $request->accesorioCrearProducto == "on"){
-              $storage = $this->saveAccessories($request, $marca_id, $subcategoria_id, ( isset($tags) )?$tags:null);
-              $saved = $storage["saved"];
-              if($storage["saved"]){
-                  $productoCreated = $storage["accessory"];
-                  $type            = "accessory";
-              }
-              else{
-                  $errors = ["No sue posible guardar el accesorio"];
-              }
-          }
 
-          //si es un proiducto
-          else{
               $storage = $this->saveProduct($request, $marca_id, $subcategoria_id, ( isset($tags) )?$tags:null);
               $saved = $storage["saved"];
               if($storage["saved"]){
                   $productoCreated = $storage["product"];
-                  $type            = "product";
               }
               else{
                   $errors = ["No sue posible guardar el producto"];
               }
-          }
-
       }
 
 
 
-      return response()->json(["saved" => $saved, "errors" => $errors, "product" => $productoCreated, "type" => $type]);
-      */
+      return response()->json(["saved" => $saved, "errors" => $errors, "product" => $productoCreated
+
+    ]);
+
+  }
+
+  /**
+  * se encarga de guardas las fotos de un producto
+  */
+  public function storageImage(Request $request)
+  {
+      $validator = Validator::make($request->all(),["croppedImage" => 'image|dimensions:min_width=420,min_height=420'],
+                                                   ["croppedImage.dimensions" => "La imagen debe tener como minimo 420px de ancho por 420px de alto"]);
+
+      if($validator->fails()){
+          return response()->json(["saved" => false, "errors" => $validator->errors()->all()]);
+      }
+
+      $saved = false;
+      $img        = $request->file('croppedImage');
+      $nombreFoto = time().'-'.$this->sinCaracteresRaros($img->getClientOriginalName()).'.'.$img->getClientOriginalExtension();
+      Storage::disk('ecommerceProducts')->put($nombreFoto, file_get_contents($img->getRealPath() ) );
+
+      $image = new Shop_image;
+      $image->route           = $nombreFoto;
+      $image->shop_product_id = $request->producto_id;
+
+      if( $image->save() ){
+         $product = Shop_product::find($request->producto_id);
+         $product->showproduct = "si";
+         $product->save();
+         $saved = true;
+      }
+
+      return response()->json(["saved" => $saved]);
+  }
+
+
+  /**
+  *Elimina un tag de un producto, maneja peticiones post
+  */
+  public function deleteTag(Request $request)
+  {
+      $detach = false;
+      $product = Shop_product::find($request->product_id);
+
+
+      $detach = ($product->shop_tags()->detach($request->tag_id)) ? true : false;
+
+      return response()->json(["detach" => $detach, "tags" => $product->shop_tags]);
   }
 }

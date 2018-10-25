@@ -6,6 +6,7 @@ import CategoryController         from '../../controllers/categoryController.js'
 import SubCategoryController      from '../../controllers/subCategoryController.js'
 import TagController              from '../../controllers/tagController.js'
 import BrandController            from '../../controllers/marcaController.js'
+import ProductController          from '../../controllers/productController.js'
 
 var Helpers = require('../helpers.js'); //incluir el archivo que contine funciones peara diferentes fines
 var helper  = new Helpers;
@@ -14,7 +15,12 @@ const chosenSelectStyle = {width:"350px"},
       maxImage          = {maxWidth:"100%"},
       startProgressBar  = {width: "0%"},
       maxHeight60px     = {height:"60px"},
-      padding0          = {padding: '0px'}
+      padding0          = {padding: '0px'},
+      closeX            = {cursor: "pointer",
+                           float: "right",
+                           fontSize: "16px",
+                           lineHeight: "32px",
+                           paddingLeft: "8px"};
 
 class Ecommerce extends React.Component
 {
@@ -25,11 +31,14 @@ class Ecommerce extends React.Component
           routesCategory  = {getCategories: this.props.routes.getCategories},
           routesSubCat    = {getSubCat: this.props.routes.getSubcategories},
           routesTags      = {getTags:this.props.routes.getTags},
-          routesBrands    = {getBrands:this.props.routes.getBrands}
+          routesBrands    = {getBrands:this.props.routes.getBrands},
+          routeProducts   = {storage:this.props.routes.storage,
+                             storageImg:this.props.routes.storageImage,
+                             getProducts:this.props.routes.getProducts,
+                             deleteTag:this.props.routes.deleteTag}
 
 		this.state = {pageForm           :'first', //renderiza un formulario, "first" los datos iniciales, "second" para agregar imagenes
                   productCreated     : false, //almacenara el id del producto creado, para pasarlo a la  arga de imagenes
-                  productCreatedType : "", //almacenara el tipo de producto que se cree (producto o accesorio), esto indicara en que tabla se deben guardar las imagenes
                   products           : this.props.products, //productos a mostrar en la pestaña productos
                   productEdit        : null, //informacion del producto a editar
                   pageFormEdit       : 'first', //formulario de edicion de
@@ -49,6 +58,7 @@ class Ecommerce extends React.Component
     this.subCategoryController = new SubCategoryController(this.props.token, routesSubCat);
     this.tagController = new TagController(this.props.token, routesTags);
     this.brandController = new BrandController(this.props.token, routesBrands);
+    this.productController = new ProductController(this.props.token, routeProducts);
 
 		this.submitForm      = this.submitForm.bind(this);
 		this.finishCreate    = this.finishCreate.bind(this);
@@ -67,38 +77,21 @@ class Ecommerce extends React.Component
 		ev.preventDefault()
 		$('#createProductPrice').val($('#createProductPrice').val().replace(/[.]/gi,"")) //quitarle los puntos al precio
 		var formData = new FormData(document.getElementById('formCreateProduct'))
-    formData.append('nuevosTags',JSON.stringify(this.state.newTags))
+    formData.append('agregarTagsCrearProducto',JSON.stringify(this.state.newTags))
 
-    console.log(`[debug] formData: ${formData}`, formData);
-		$.ajax({
-			url:this.props.routes.storage,
-			type:'POST',
-      headers:{'X-CSRF-TOKEN': this.props.token},
-			data: formData,
-			dataType:"JSON",
-			cache: false,
-			contentType: false,
-			processData: false,
-				beforeSend:function(){
-					console.log(`[debug] enviando formulario...`);
-				}.bind(this),
-				success:function(response){
-					console.log(`[debug] formulario enviado`);
+    this.productController.saveProduct(formData, response =>{
+      if(response.saved){
 
-					if(response.saved){
-
-					  helper.showMessage("success","Datos almacenados", "Debes agregar fotos a el producto")
-						this.setState({pageForm           : "second",
-					                   productCreated     : response.product.id,
-					                   productCreatedType : response.type});
-					}
-					else{
-						response.errors.forEach( error => {
-							helper.showMessage("error","Algo salió mal", error)
-						})
-					}
-				}.bind(this)
-		})
+        helper.showMessage("success","Datos almacenados", "Debes agregar fotos a el producto")
+        this.setState({pageForm           : "second",
+                      productCreated     : response.product.id});
+      }
+      else{
+        response.errors.forEach( error => {
+          helper.showMessage("error","Algo salió mal", error)
+        })
+      }
+    });
 	}
 
 	//maneja el onSubmit del formuñlario que edita un producto
@@ -169,16 +162,18 @@ class Ecommerce extends React.Component
                          categoryController={this.categoryController}
                          subCategoryController={this.subCategoryController}
                          tagController={this.tagController}
-                         brandController={this.brandController}/>
+                         brandController={this.brandController}
+                         productController={this.productController}/>
 		}
 		else if(this.state.pageForm == "second"){
 			return <FormImages defaultImg={this.props.defaultImg}
-                               routeSubmit={this.props.routes.storageImage}
-                               routeDeleteImg={this.props.routes.deleteImg}
-                               maxUpload={this.props.maxUpload}
-                               productCreated={this.state.productCreated}
-                               productCreatedType={this.state.productCreatedType}
-                               finishCreate={this.finishCreate}/>
+                         routeSubmit={this.props.routes.storageImage}
+                         routeDeleteImg={this.props.routes.deleteImg}
+                         maxUpload={this.props.maxUpload}
+                         productCreated={this.state.productCreated}
+                         token={this.props.token}
+                         finishCreate={this.finishCreate}
+                         productController={this.productController}/>
 		}
 	}
 
@@ -203,20 +198,11 @@ class Ecommerce extends React.Component
 	//maneja el evento onClick del boton que finaliza la carga de fotos
 	finishCreate(ev){
 		ev.preventDefault()
-		$.ajax({
-			url:this.props.routes.getLastProducts,
-			type:'POST',
-			dataType:'JSON',
-			 beforeSend:function(){
-			 	$("#BlockRequestAjax").fadeIn();
-			 }.bind(this),
-			 success:function(response){
-			 	$("#BlockRequestAjax").fadeOut();
-			 	this.setState({pageForm:'first',
-			                   products:response.products,
-			                   prev:response.prev})
-			 }.bind(this)
-		})
+    this.productController.getProducts( data => {
+      this.setState({pageForm:'first',
+                    products:data.products,
+                    prev:data.prev})
+    })
 	}
 
 	//cambia el state pageFormEdit a first, se usa cuando se cierra el modal de editar, por si vuelve a abrir otra vez
@@ -256,15 +242,19 @@ class Ecommerce extends React.Component
 	//muestra el modal de editar producto
 	showModalEdit(e){
 	  e.preventDefault()
-	  var id = e.target.getAttribute("data-id")
 
+	  var id = e.target.getAttribute("data-id")
 	  this.state.products.forEach( product => {
 	  	 if(product.id == id){
 	  	 	this.setState({productEdit:product}); //establecer el producto cliqueado para editar en el state productEdit
 	  	 }
 	  })
 
-	  $('#modalEditProduct').modal('show');
+    console.log(`[deug] modal: ${document.getElementById('modalEditProduct')}`, document.getElementById('modalEditProduct'));
+
+    var instance = M.Modal.getInstance(document.getElementById('modalEditProduct'));
+    instance.open();
+	  //abrir el modal
 	}
 
 	//renderiza los option de las categorias padres
@@ -418,35 +408,39 @@ class Ecommerce extends React.Component
 
                       <div className="row">
 
-                          <div className="col-md-12 m-b">
+                          <div className="col m12 m-b">
                             <div className="row">
-                              <div className="col-md-3">
+                              <div className="col m3">
                                 <select className="browser-default" name="filterFather" id="filterFather" onChange={this.filter}>
                                   <option value="">Categoria padre</option>
                                   {this.renderOptFatherCategories()}
                                 </select>
                               </div>
 
-                              <div className="col-md-3">
+                              <div className="col m3">
                                 <select className="browser-default" name="filterCategory" id="filterCategory" onChange={this.filter}>
                                   <option value="">Categoria</option>
                                   {this.renderOptCategories()}
                                 </select>
                               </div>
 
-                              <div className="col-md-3">
+                              <div className="col m3">
                                 <select className="browser-default" name="filterSubCate" id="filterSubCate" onChange={this.filter}>
                                   <option value="">Subcategoria</option>
                                   {this.renderOptSubCategories()}
                                 </select>
                               </div>
 
-                              <div className="col-md-3">
-                                <div className="input-group">
-                                  <input type="text" className="input form-control" name="filterName" id="filterName" onChange={this.filter}/>
-                                  <span className="input-group-btn">
-                                    <button type="button" className="btn btn btn-primary" id="btn-ir"><span>{this.state.gifFilter == true ? <i className="fa fa-spinner fa-spin" aria-hidden="true"></i> : " Ir"}</span></button>
-                                  </span>
+                              <div className="col m3">
+                                <div className="row">
+                                  <div className="col s8">
+                                    <input type="text" className="input form-control" name="filterName" id="filterName" onChange={this.filter}/>
+                                  </div>
+                                  <div className="col s4">
+                                      <button type="button" id="btn-ir" className="waves-effect waves-light btn">
+                                        <i className="material-icons right">search</i>
+                                      </button>
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -456,7 +450,7 @@ class Ecommerce extends React.Component
                                        defaultImg={this.props.defaultImg}
                                        showModalEdit={this.showModalEdit}/>
 
-                          <div className="col-md-12 m-t">
+                                     <div className="col m12 m-t">
                               <div className="col-md-4 col-md-offset-5">
                                {this.state.next == true ? <button className="btn btn-default" data-order="next" data-position={this.state.products[0]["created_at"]} onClick={this.handlerPrev}>{"<"}</button> : ""}
                                {this.state.prev == true ? <button className="btn btn-default" data-order="prev" data-position={this.state.products[this.state.products.length - 1]["created_at"]} onClick={this.handlerPrev}>></button> : ""}
@@ -488,14 +482,16 @@ class Ecommerce extends React.Component
                          routeSubmit={this.props.routes.storage}
                          routeUpImge={this.props.routes.storageImage}
                          productEdit={this.state.productEdit}
-                         productCreatedType={this.state.typeEdit}
                          pageFormEdit={this.state.pageFormEdit}
                          routeEditImg={this.props.routes.routeEditImg}
                          finishUpdate={this.finishUpdate}
                          routeDeleteImg={this.props.routes.deleteImg}
                          token={this.props.token}
                          tagController={this.tagController}
+                         subCategoryController={this.subCategoryController}
+                         categoryController={this.categoryController}
                          brandController={this.brandController}
+                         productController={this.productController}
                          />
 
   			   </div>)
@@ -517,9 +513,9 @@ class ProducPanel extends React.Component
 		this.props.products.forEach( product => {
 
 			row.push(<Produt product={product}
-                             defaultImg={this.props.defaultImg}
-                             key={"content-product"+product.id}
-                             showModalEdit={this.props.showModalEdit}/>)
+                       defaultImg={this.props.defaultImg}
+                       key={"content-product"+product.id}
+                       showModalEdit={this.props.showModalEdit}/>)
 
 			iteracion++;
 			if(iteracion == 5){
@@ -540,10 +536,12 @@ class ProducPanel extends React.Component
 
 	render(){
 		return(<div>
-          			{this.buildProducts()}
-                </div>)
+          		{this.buildProducts()}
+           </div>)
 	}
 }
+
+
 
 //tarjeta de un producto
 //props: product        -> object    Información del producto
@@ -551,15 +549,6 @@ class ProducPanel extends React.Component
 //       showModalEdit  -> function
 class Produt extends React.Component
 {
-	//renderiza un campo informando al usuario que el producto no esta disponible para los visitantes
-	renderInfo(){
-		if(this.props.product.showproduct == "no"){
-			return <span className="product-info">
-	                    Este producto no es visible.
-	                </span>
-		}
-	}
-
 	componentDidMount(){
 		$('#full-height-scroll-'+this.props.product.id).slimscroll({
 	  		height: '100%'
@@ -569,40 +558,27 @@ class Produt extends React.Component
 	render(){
 
 		var images = this.props.product.type == "product" ? "shop_images" : "shop_accessoryimages";
-		return(<div className="col-md-3">
-						<div className="ibox">
-		                    <div className="ibox-content product-box">
-
-		                        <div className="product-imitation">
-		                            	<img className="img-responsive" src={this.props.product[images].length > 0 ? this.props.product[images][0].route : this.props.defaultImg}/>
-		                        </div>
-		                        <div className="product-desc">
-		                            <span className="product-price">
-		                                <small>{this.props.product.showprice == "no" ? "No visible " : ""}</small>
-		                                ${helper.formatoNumero(this.props.product.price)}
-		                            </span>
-
-		                            {this.renderInfo()}
-
-		                            <small className="text-muted">{this.props.product.shop_subcategory.shop_category.shop_fathercategory.name+" / "+this.props.product.shop_subcategory.shop_category.name+" / "+this.props.product.shop_subcategory.name}</small>
-		                            <a href={this.props.product.detail} className="product-name"> {this.props.product.name}</a>
-
-		                            <div style={maxHeight60px}>
-			                            <div id={"full-height-scroll-"+this.props.product.id}>
-				                           <div className="small m-t-xs">
-				                                {this.props.product.meta_description}
-				                           </div>
-				                        </div>
-				                    </div>
-
-		                            <div className="m-t text-righ">
-		                            	  <button className="btn btn-xs btn-outline btn-primary" data-id={this.props.product.id} onClick={this.props.showModalEdit}> Editar</button>
-		                                <a href={this.props.product.detail} target="_blank" className="btn btn-xs btn-outline btn-primary">Mas <i className="fa fa-long-arrow-right"></i> </a>
-		                            </div>
-		                        </div>
-		                    </div>
-		                </div>
-			         </div>)
+		return(<div className="col m3">
+                <div className="card">
+                    <div className="card-image">
+                      <img className="responsive-img" src={this.props.product[images].length > 0 ? this.props.product[images][0].route : this.props.defaultImg}/>
+                      <span className="card-title">Card Title</span>
+                      <a href={this.props.product.detail} target="_blank" className="btn-floating halfway-fab waves-effect waves-light red"><i className="material-icons">add</i></a>
+                    </div>
+                    <div className="card-content">
+                      <span className="product-price">
+                          <small className="text-muted">{this.props.product.shop_subcategory.shop_category.shop_fathercategory.name+" / "+this.props.product.shop_subcategory.shop_category.name+" / "+this.props.product.shop_subcategory.name}</small>
+                          <br></br>
+                          ${helper.formatoNumero(this.props.product.price)}<br></br>
+                          <a href={this.props.product.detail} className="product-name"> {this.props.product.name}</a>
+                          <div className="m-t text-righ">
+                              {/*<button className="btn btn-xs btn-outline btn-primary" data-id={this.props.product.id} onClick={this.props.showModalEdit}> <i className="material-icons">edit</i></button> */}
+                              <a className="waves-effect waves-light btn modal-trigger" data-id={this.props.product.id} onClick={this.props.showModalEdit} href="#modalEditProduct"><i className="material-icons" data-id={this.props.product.id}>edit</i></a>
+                        </div>
+                      </span>
+                    </div>
+                </div>
+           </div>)
 	}
 }
 
@@ -643,6 +619,7 @@ class Produt extends React.Component
 *       @prop {instance} categoryController     -> instancia del controlador de categorias
 *       @prop {instance} tagController          -> instancia de el controlador de tags
 *       @prop {instance} brandController        -> instancia del controlador de marcas
+*       @prop {instance} productController      -> instancia del controlador de productos
 */
 class FormCreate extends React.Component
 {
@@ -868,7 +845,7 @@ class FormCreate extends React.Component
 		if( this.state.otherSubCategory ){
 			return <div className="row m-t-xs">
   						<div className="input-field col s12">
-                <input className="form-control" name="nuevaSubCategoriaCrearProducto" id="createProductNewSubCategory" required/>
+                <input className="active" name="nuevaSubCategoriaCrearProducto" id="createProductNewSubCategory" required/>
   							<label htmlFor="nuevaSubCategoriaCrearProducto">Nombre sub-categoria</label>
   						</div>
   				   </div>
@@ -989,20 +966,11 @@ class FormCreate extends React.Component
 	ajaxQuitTag(ev){
 		ev.preventDefault()
 		var tag = ev.target.getAttribute('data-id')
-		$.ajax({
-			url:this.props.routeQuitTag,
-			type:"POST",
-			data:{product_id:this.state.productEditId,tag_id:tag,type:this.state.type},
-			dataType:"JSON",
-			 beforeSend:function(){
-
-			 }.bind(this),
-			 success:function(response){
-				if(response.detach){
-					this.setState({tags:response.tags})
-				}
-			 }.bind(this)
-		})
+    this.props.productController.dellTag(this.state.productEditId,tag, (response) =>{
+      if(response.detach){
+        this.setState({tags:response.tags})
+      }
+    });
 	}
 
 	//renderiza los tags de un producto o accesorio, para permitir quitarlos
@@ -1010,15 +978,10 @@ class FormCreate extends React.Component
 		if(this.state.tags.length > 0){ //si hay tags, los renderizamos
 			var tags = [];
 			this.state.tags.forEach( tag =>{
-				tags.push(<li key={"liTag-"+tag.id}><a data-id={tag.id} onClick={this.ajaxQuitTag}><i className="fa fa-tag" data-id={tag.id}></i> {tag.name} <i className="fa fa-times" data-id={tag.id}></i></a></li>)
+				tags.push(<Tag key={"liTag-"+tag.id} id={tag.id} name={tag.name} ajaxQuitTag={this.ajaxQuitTag} />)
 			})
 
-			return <div>
-  	             <h5 className="tag-title">Tags asignados:</h5>
-                 <ul className="tag-list" style={padding0}>
-                   {tags}
-                 </ul>
-              </div>
+			return tags
 		}
 	}
 
@@ -1166,6 +1129,14 @@ class FormCreate extends React.Component
 	}
 
 	render(){
+
+    if(this.state.tags.length > 0){ //si hay tags, los renderizamos
+			var tags = [];
+			this.state.tags.forEach( tag =>{
+				tags.push(<Tag key={"liTag-"+tag.id} id={tag.id} name={tag.name} ajaxQuitTag={this.ajaxQuitTag} />)
+			})
+		}
+
 		return(<form id={this.props.formId} onSubmit={this.props.submitForm} encType="multipart/form-data">
     				<div className="row">
     					<div className="col s12 m4">
@@ -1192,15 +1163,17 @@ class FormCreate extends React.Component
 
     						{this.toggleInputOtherSubCategory()}
 
-
+                { console.log(`[debug] descripcion ${this.props.editOrCreate == "edit" ? "active" : ""}`) }
     						<div className="row m-t-xs">
     							<div className="input-field col s12">
     								<textarea className="materialize-textarea" name="metaDescripcionCrearProducto" id="createProductDescriptionMeta" value={this.state.valueMetaDescription} onChange={this.handlerChangeMetaDescription} required></textarea>
-                    <label htmlFor="metaDescripcionCrearProducto">Meta description:</label>
+                    <label htmlFor="metaDescripcionCrearProducto" className={ this.props.editOrCreate == "edit" ? "active" : ""} >Meta descripción</label>
                 </div>
     						</div>
 
-    						{this.renderTags()}
+                <div>
+    						    { tags }
+                </div>
 
     						<div className="row m-t-xs">
     							<div className="input-field col s12">
@@ -1299,6 +1272,22 @@ class FormCreate extends React.Component
 }
 
 
+
+/**
+* Tag de un producto
+*@prop {int} id //id del tag
+*@prop {string} name //nombre a mostrar
+*@prop {function} ajaxQuitTag //evento que se ejuta cuando se clikea la x
+*/
+class Tag extends React.Component
+{
+  render(){
+    return(<div className="chip">
+                  {this.props.name}
+                  <i className="material-icons" data-id={this.props.id} onClick={this.props.ajaxQuitTag} style={closeX}>close</i>
+           </div>)
+  }
+}
 
 
 
@@ -1479,8 +1468,8 @@ class FormImages extends React.Component
 		super(props)
 
 		this.state = {'fieldsPic'     :['input-0'], //cundo se agrega un nuevo elemnto a este array, igulmente se renderizaran inputs para fotos
-	                  'showBtnFinish' :false, //si es true renderiza un boton para
-	                 }
+	                'showBtnFinish' :false, //si es true renderiza un boton para
+	               }
 
 	    this.appendInputPic   = this.appendInputPic.bind(this) //maneja el onClik de el boton que agrega campos para poner más fotos
 	    this.deleteFieldInput = this.deleteFieldInput.bind(this) //se encarga de eliminar un input de foto
@@ -1488,8 +1477,8 @@ class FormImages extends React.Component
 	}
 
 	//maneja el evento del clic al boton quitar foto,
-    //recorre  la variable de estado fieldsPic y quita el indice de la fila seleccionada
-    deleteFieldInput(e){
+  //recorre  la variable de estado fieldsPic y quita el indice de la fila seleccionada
+  deleteFieldInput(e){
     	e.preventDefault()
     	var fila    = e.target.getAttribute('data-row'),
     	    letRows = []
@@ -1516,6 +1505,7 @@ class FormImages extends React.Component
     }
 
     //agrega un elemnto al state fieldsPic, y renderiza inputs de acuerdo a la cantidd de elemntos de este state
+
 	appendInputPic(ev) {
 		ev.preventDefault()
 		if(this.state.fieldsPic.length < this.props.maxUpload){
@@ -1539,10 +1529,11 @@ class FormImages extends React.Component
 						                                            routeSubmit={this.props.routeSubmit}
 						                                            routeDeleteImg={this.props.routeDeleteImg}
 						                                            productCreated={this.props.productCreated}
-						                                            productCreatedType={this.props.productCreatedType}
 						                                            showBtnFinish={this.showBtnFinish}
 						                                            update={false}
-						                                            imgId={false}/>)}
+                                                        token={this.props.token}
+						                                            imgId={false}
+                                                        productController={this.props.productController}/>)}
 
 					<div className="col-md-12">
 						<button className="btn btn-default pull-right" onClick={this.appendInputPic}>Agregar foto</button>
@@ -1561,26 +1552,27 @@ class FormImages extends React.Component
 //        routeSubmit           -> string      Ruta donde se hace la peticion ajax que se encarga de almacenar la imagen
 //        routeDeleteImg        -> string      Ruta a la que se hara la peticion ajax para eliminar una imagen
 //        productCreated        -> int         Id del producto al qiue perteneceran las imagenes editadas aqui
-//        productCreatedType    -> string      tipo de producto, serivira para saber en que tabla debe subir las imagenes ['product' || 'accessory']
 //        showBtnFinish         -> funcion     Debe encargar se de mostrar un boton para terminar de editar foto y volver al formulario 1
 //        update                -> boolean     True si es para editar una foto.
 //        imgId                 -> int||bool   id de la imagen a editar, si no es un update se le pasa false
+//        token                 -> string      token para poder realizar peticiones ajax a laravel
 class RowInputPic extends React.Component
 {
 	constructor(props){
 		super(props)
 
 		this.state = { options:{aspectRatio: 1 / 1,
-			                    viewMode: 1,
-						        dragMode: 'move',
-						        autoCropArea: 0.65,
-						        restore: false,
-						        guides: true,
-						        highlight: true,
-						        cropBoxMovable: true,
-						        cropBoxResizable: false,
-						        preview: "#preview-img-"+this.props.row},
-					 }
+  			                    viewMode: 1,
+        						        dragMode: 'move',
+        						        autoCropArea: 0.65,
+        						        restore: false,
+        						        guides: true,
+        						        highlight: true,
+        						        cropBoxMovable: true,
+        						        cropBoxResizable: false,
+        						        preview: "#preview-img-"+this.props.row},
+                    image : this.props.row,
+					        }
 
 	    this.deleteImg = this.deleteImg.bind(this)
 	}
@@ -1621,18 +1613,20 @@ class RowInputPic extends React.Component
 		    barProgress        = "barProgress"+this.props.row,
 		    options            = this.state.options,
 		    cropper            = new Cropper(image, this.state.options),
-			$inputImage        = $("#inputImage-"+this.props.row),
-			$loadImge          = $("#btnLoad-"+this.props.row),
-			routeSubmit        = this.props.routeSubmit,
-			producto_id        = this.props.productCreated,
-			productCreatedType = this.props.productCreatedType,
-			showBtnFinish      = this.props.showBtnFinish,
-			update             = this.props.update,
-			imgId              = this.props.imgId,
-		    uploadedImageURL
+  			$inputImage        = $("#inputImage-"+this.props.row),
+  			$loadImge          = $("#btnLoad-"+this.props.row),
+  			routeSubmit        = this.props.routeSubmit,
+  			producto_id        = this.props.productCreated,
+  			showBtnFinish      = this.props.showBtnFinish,
+  			update             = this.props.update,
+  			imgId              = this.props.imgId,
+        token              = this.props.token,
+        productController  = this.props.productController,
+  		  uploadedImageURL
+
 
         if (window.FileReader) {
-        	//boton cambiar imagen
+        	  //boton cambiar imagen
             $inputImage.change( () => {
                 var fileReader = new FileReader(),
                         files = $inputImage[0].files,
@@ -1661,105 +1655,84 @@ class RowInputPic extends React.Component
 				        document.getElementById(barProgress).classList.add("progress-bar-info");
 
                 } else {
-                    showMessage("Please choose an image file.");
+                    helper.showMessage("error", "error imagen", "Por favor elije una imagen.");
                 }
             });
 
             //boton subir imagen
+
             $loadImge.on("click", (ev) => {
             	ev.preventDefault()
             	cropper.getCroppedCanvas().toBlob(function (blob) {
-				  var formData = new FormData();
+				      var formData = new FormData();
 
-				  formData.append('croppedImage', blob);
-				  formData.append('producto_id', producto_id);
-				  formData.append('productCreatedType',productCreatedType);
+    				  formData.append('croppedImage', blob);
+    				  formData.append('producto_id', producto_id);
 
-				  if(update){
-				  	formData.append('img_id',imgId);
-				  }
+    				  if(update){
+    				  	formData.append('img_id',imgId);
+    				  }
 
-				  // Use `jQuery.ajax` method
-				  $.ajax({
-				  	url:routeSubmit,
-				    method: "POST",
-				    data: formData,
-				    processData: false,
-				    contentType: false,
-				    xhr: function() { //esta funcion permite la comunicación con el servidor durante la carga
-				        var xhr = new window.XMLHttpRequest();
-				        xhr.upload.addEventListener("progress", function(evt) {
-				            if (evt.lengthComputable) {
-				                //Do something with upload progress here
-				                var percent = (event.loaded / event.total) * 100;
-								var width = Math.round(percent)+'%'
-								document.getElementById(barProgress).style.width = width;
-				            }
-				       }, false);
-
-				       return xhr;
-				    },
-				    success: function (response) {
-				      if(response.saved){
-				      	document.getElementById(barProgress).classList.remove("progress-bar-info");
-				        document.getElementById(barProgress).classList.remove("active");
-				        document.getElementById(barProgress).classList.add("progress-bar-primary");
-				        showBtnFinish();
-				      }
-				      else{
-				      	document.getElementById(barProgress).classList.remove("progress-bar-info");
-				        document.getElementById(barProgress).classList.remove("active");
-				        document.getElementById(barProgress).classList.add("progress-bar-danger");
-				        response.errors.forEach( error => {
-				        	helper.showMessage("error","Algo salió mal",error)
-				        })
-				      }
-
-				    }.bind(this),
-				    error: function () {
-				      document.getElementById(barProgress).classList.remove("progress-bar-info");
-				      document.getElementById(barProgress).classList.remove("active");
-				      document.getElementById(barProgress).classList.add("progress-bar-danger");
-				      helper.showMessage("error","Algo salió mal","La carga de la imagen falló")
-				    }.bind(this)
-				  });
-				});
+                  productController.saveImg(formData, (evt)=>{
+                    var percent = (evt.loaded / evt.total) * 100;
+                    var width = Math.round(percent)+'%'
+                    console.log(`[debug] send img: ${width}`);
+                    document.getElementById(barProgress).style.width = width;
+                    },
+                    (response)=>{
+                      if(response.saved){
+                        helper.showMessage("success","Imagen guardada","Imagen guardada")
+                        showBtnFinish();
+                      }
+                      else{
+                        document.getElementById(barProgress).style.width = 0;
+                        response.errors.forEach( error => {
+                          helper.showMessage("error","Algo salió mal",error)
+                        })
+                      }
+                  },
+                  ()=>{
+                    document.getElementById(barProgress).style.width = width;
+                    helper.showMessage("error","Algo salió mal","La carga de la imagen falló")
+                  })
+				      });
             })
 
-        } else {
-            $inputImage.addClass("hide");
+        }
+        else
+        {
+              $inputImage.addClass("hide");
         }
 	}
 
 	render(){
 	     return(<div className="row m-t-xs" id={"contCroperImg-"+this.props.row}>
-	     			<div className="col-xs-8">
-	     				<img id={"grap"+this.props.row} style={maxImage} src={this.props.defaultImg}/>
-	     			</div>
-	     			<div className="col-xs-4">
-	     						<div className="col-md-12">
-	     							<h4>Vista previa</h4>
+    	     			<div className="col s8">
+    	     				<img id={"grap"+this.props.row} style={maxImage} src={this.props.defaultImg}/>
+    	     			</div>
+    	     			<div className="col s4">
+    	     					<div className="col s12">
+    	     							<h4>Vista previa</h4>
 
-				     				<div className="img-preview img-preview-sm" id={"preview-img-"+this.props.row}>
-				     					<img src={this.props.defaultImg}/>
-				     				</div>
+    				     				<div className="img-preview img-preview-sm" id={"preview-img-"+this.props.row}>
+    				     					<img src={this.props.defaultImg} className="responsive-img"/>
+    				     				</div>
 
-		     						<div className="btn-group m-t-xs m-b-xs">
-		     						    {this.renderBtnDelete()}
-			                            <label title="Upload image file" htmlFor={"inputImage-"+this.props.row} className="btn btn-primary">
-			                                <input type="file" accept="image/*" name="file" id={"inputImage-"+this.props.row} className="hide" onChange={this.changeImage}/>
-			                                Selecionar imagen
-			                            </label>
-			                            <button className="btn btn-primary" id={"btnLoad-"+this.props.row}>Cargar <i className="fa fa-upload" aria-hidden="true"></i></button>
-			                        </div>
+    		     						         <div className="btn-group m-t-xs m-b-xs">
+    		     						               {this.renderBtnDelete()}
+    			                            <label title="Upload image file" htmlFor={"inputImage-"+this.props.row} className="btn btn-primary">
+    			                                <input type="file" accept="image/*" name="file" id={"inputImage-"+this.props.row} className="hide" onChange={this.changeImage}/>
+    			                                Selecionar imagen
+    			                            </label>
+    			                            <button className="btn btn-primary" id={"btnLoad-"+this.props.row}>Cargar <i className="fa fa-upload" aria-hidden="true"></i></button>
+    			                        </div>
 
-			                        <div className="progress">
-									  <div id={"barProgress"+this.props.row} className="progress-bar progress-bar-info progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style={startProgressBar}>
-									    <span className="sr-only">0% Complete</span>
-									  </div>
-								   </div>
-								</div>
-	     			</div>
+                                  <div className="progress">
+                                      <div className="determinate" id={"barProgress"+this.props.row} style={startProgressBar}></div>
+                                  </div>
+
+    								</div>
+    	     			</div>
 	     	    </div>)
     }
 }
@@ -1774,40 +1747,43 @@ class ModalEdit extends React.Component
 	renderAForm(){
 		if(this.props.pageFormEdit == "first"){
 			return  <FormCreate fatherCategories={this.props.fatherCategories}
-	                                routeGetCategories={this.props.routeGetCategories}
-	                                routeGetSubCategories={this.props.routeGetSubCategories}
-	                                routeProductsOfAccessory={this.props.routeProductsOfAccessory}
-                                  routeGetBrands={this.props.routeGetBrands}
-	                                quitProductOfAccessory={this.props.quitProductOfAccessory}
-	                                quitAccessoryOfProduct={this.props.quitAccessoryOfProduct}
-	                                routeQuitTag={this.props.routeQuitTag}
-	                                getAccessories={this.props.getAccessories}
-	                                maxUpload={this.props.maxUpload}
-	                                submitForm={this.props.submitForm}
-	                                defaultImg={this.props.defaultImg}
-	                                routeSubmit={this.props.routeSubmit}
-	                                idFieldDescription="editarDescripcion"
-	                                idFielTags="editProductTags"
-	                                idAccesories="editProductSelectAccessories"
-	                                idSelectCategory="editProductCategory"
-	                                idProductsOfAccesories="editProductSelectProducts"
-	                                formId="formEditProduct"
-	                                switchShowPriceId="editShowPrice"
-	                                switchMoreTagsId="editAddMoreTags"
-	                                switchAccessory="editAccesory"
-	                                switchHaveAccesories="editHaveAccesories"
-	                                editOrCreate="edit"
-	                                productEdit={this.props.productEdit}
-                                  token={this.props.token}
-                                  tagController={this.props.tagController}
-                                  brandController={this.props.brandController}/>
+                          routeGetCategories={this.props.routeGetCategories}
+                          routeGetSubCategories={this.props.routeGetSubCategories}
+                          routeProductsOfAccessory={this.props.routeProductsOfAccessory}
+                          routeGetBrands={this.props.routeGetBrands}
+                          quitProductOfAccessory={this.props.quitProductOfAccessory}
+                          quitAccessoryOfProduct={this.props.quitAccessoryOfProduct}
+                          routeQuitTag={this.props.routeQuitTag}
+                          getAccessories={this.props.getAccessories}
+                          maxUpload={this.props.maxUpload}
+                          submitForm={this.props.submitForm}
+                          defaultImg={this.props.defaultImg}
+                          routeSubmit={this.props.routeSubmit}
+                          idFieldDescription="editarDescripcion"
+                          idFielTags="editProductTags"
+                          idAccesories="editProductSelectAccessories"
+                          idSelectCategory="editProductCategory"
+                          idProductsOfAccesories="editProductSelectProducts"
+                          formId="formEditProduct"
+                          switchShowPriceId="editShowPrice"
+                          switchMoreTagsId="editAddMoreTags"
+                          switchAccessory="editAccesory"
+                          switchHaveAccesories="editHaveAccesories"
+                          editOrCreate="edit"
+                          productEdit={this.props.productEdit}
+                          token={this.props.token}
+                          tagController={this.props.tagController}
+                          subCategoryController={this.props.subCategoryController}
+                          categoryController={this.props.categoryController}
+                          brandController={this.props.brandController}
+                          productController={this.props.productController}/>
 		}
 		else{
 			return <FormEditImages productEdit={this.props.productEdit}
-		                           productCreatedType={this.props.productCreatedType}
 			                       routeEditImg={this.props.routeEditImg}
 			                       defaultImg={this.props.defaultImg}
 			                       routeSubmit={this.props.routeUpImge}
+                             token={this.props.token}
 			                       routeDeleteImg={this.props.routeDeleteImg}/>
 		}
 	}
@@ -1819,6 +1795,9 @@ class ModalEdit extends React.Component
 	}
 
 	componentDidMount(){
+    var elems = document.querySelectorAll('.modal');
+    var instances = M.Modal.init(elems, {});
+
 		var finishUpdate = this.props.finishUpdate
 
 		$('#modalEditProduct').on('shown.bs.modal', function (e) {
@@ -1832,32 +1811,29 @@ class ModalEdit extends React.Component
 	}
 
 	render(){
-		return(<div className="modal inmodal fade" id="modalEditProduct" tabIndex="-1" role="dialog" aria-labelledby="exampleModalLabel">
-				  <div className="modal-dialog modal-xxl" role="document">
-				    <div className="modal-content">
-				      <div className="modal-header">
-				        <button type="button" className="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+		return(<div id="modalEditProduct" className="modal modal-xl">
+              <div className="mod-content">
+
 				        <h4 className="modal-title" id="exampleModalLabel">Editar producto {this.props.productEdit != null ? this.props.productEdit.name : ""}</h4>
-				      </div>
-				      <div className="modal-body">
-				       		{this.renderAForm()}
-				      </div>
-				      <div className="modal-footer">
-				        <button type="button" className="btn btn-default" data-dismiss="modal">Cancelar</button>
+
+                {this.renderAForm()}
+
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-default" data-dismiss="modal">Cancelar</button>
 				        {this.renderBtnFinish()}
-				      </div>
-				    </div>
-				  </div>
-			    </div>)
+              </div>
+            </div>)
 	}
 }
+
 
 //formulario para editar las fotos de un producto
 //props: productEdit         -> object    Informacion del producto a editar
 //       routeEditImg        -> string    Ruta ajax donde se manejara la actualizacion de la imagen
 //       defaultImg          -> string    Ruta de la imagen por defecto
 //       routeSubmit         -> string    Ruta para subir nuevas imagenes
-//       productCreatedType  -> string    tipo de producto a editar producto o accesorio
+//       token               -> string    Token para realizar peticiones ajax
 class FormEditImages extends React.Component
 {
 	constructor(props){
@@ -1923,9 +1899,9 @@ class FormEditImages extends React.Component
                                      routeSubmit={this.props.routeEditImg}
                                      routeDeleteImg={this.props.routeDeleteImg}
                                      productCreated={this.props.productEdit.id}
-                                     productCreatedType={this.props.productCreatedType}
                                      showBtnFinish={this.showBtnFinish}
                                      update={true}
+                                     token={this.props.token}
                                      imgId={img.id}/>)
 		})
 		return render
@@ -1943,9 +1919,9 @@ class FormEditImages extends React.Component
 						                                            routeSubmit={this.props.routeSubmit}
 						                                            routeDeleteImg={this.props.routeDeleteImg}
 						                                            productCreated={this.props.productEdit.id}
-						                                            productCreatedType={this.props.productCreatedType}
 						                                            showBtnFinish={this.showBtnFinish}
 						                                            update={false}
+                                                        token={this.props.token}
 						                                            imgId={false}/>)}
 
 			 		<div className="col-md-12">

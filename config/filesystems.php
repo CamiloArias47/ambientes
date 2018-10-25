@@ -64,6 +64,13 @@ return [
             'url' => env('AWS_URL'),
         ],
 
+          #mis discos::::::::::::::::::::::::::::::::::::::::::::
+
+        'ecommerceProducts' => [
+            'driver' => 'local',
+            'root' => public_path('assets/img/products'),
+        ],
+
     ],
 
 ];

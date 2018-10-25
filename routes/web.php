@@ -36,6 +36,9 @@ Route::group( ["prefix" => "products"], function(){
   Route::post('storage', 'ProductsController@storage')->name('products.storage');
   Route::post('brands','ProductsController@responseGetBrands')->name('products.brands');
   Route::post('tags', 'ProductsController@responseGetTags')->name('products.tags');
+  Route::post('storageImg', 'ProductsController@storageImage')->name('products.storageimg');
+  Route::post('getProducts', 'ProductsController@getProducts')->name('products.getproducts');
+  Route::post('deleteTag', 'ProductsController@deleteTag')->name('products.deleteTag');
 });
 
 //___________________________Ecommerce_public__________________________________

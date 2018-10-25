@@ -17,7 +17,11 @@ module.exports = class Helpers {
 	//message                         =  string "Mensaje que se mostrara en la alerta"
 	showMessage(type,title,message){
 		setTimeout(function() {
-						M.toast({html: message})
+			var html = message;
+						if(type == "error"){
+							var html = '<span style="color:#ef5350;">'+message+'</span>'
+						}
+						M.toast({html: html})
         }, 1000);
 	}
 

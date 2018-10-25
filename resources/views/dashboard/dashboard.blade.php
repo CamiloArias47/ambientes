@@ -72,6 +72,8 @@
     <script type="text/javascript" src="{{ asset('assets/plugins/summernote-master/dist/summernote.js') }}"></script>
     <script type="text/javascript" src="{{ asset('assets/plugins/summernote-master/dist/lang/summernote-es-ES.js') }}"></script>
     <script type="text/javascript" src="{{ asset('assets/plugins/bootstrap-tagsinput-latest/src/bootstrap-tagsinput.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('assets/plugins/slimScroll/jquery.slimscroll.js') }}"></script>
+
 
     <script type="text/javascript">
       var user   = {name:"{!! auth()->user()->name !!}",
@@ -85,13 +87,16 @@
                     getSubcategories : "{!! route('getsubcategories') !!}",
                     storage : "{!! route('products.storage') !!}",
                     getBrands : "{!! route('products.brands') !!}",
-                    getTags : "{!! route('products.tags') !!}"};
+                    getTags : "{!! route('products.tags') !!}",
+                    storageImage : "{!! route('products.storageimg') !!}",
+                    getProducts : "{!! route('products.getproducts') !!}",
+                    deleteTag : "{!! route('products.deleteTag')!!}" };
 
           //estas variables es mejor setearlas cuando se cargue el componente con un ajax o un fetch
           var fatherCategories = {!!$fatherCategories!!},
-              maxUpload        = "{{$maxUpload}}",
+              maxUpload        = 10, //numero maximo de fotos por producto
               products         = {!!$products!!},
-              defaultImg       = "{{ asset('image/ecommerce/products/default.png') }}",
+              defaultImg       = "{{ asset('assets/img/products/default.jpg') }}",
               prev       			 = "{!!$prev!!}";
     </script>
 
