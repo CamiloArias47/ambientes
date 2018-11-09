@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Shop_product extends Model
 {
-    protected $fillable=['name','description','meta_description','shop_brand_id','price','shop_subcategory_id','showproduct','showprice'];
+    protected $fillable=['name','description','meta_description','shop_brand_id','price','shop_subcategory_id','showproduct'];
     protected $table   = 'shop_products';
 
     public function shop_subcategory(){
@@ -24,7 +24,7 @@ class Shop_product extends Model
     public function shop_tags()
     {
         return $this->belongsToMany('App\Shop_tag','shop_product_shop_tag');
-    } 
+    }
 
     public function shop_accessories()
     {
@@ -37,6 +37,6 @@ class Shop_product extends Model
         if(trim($search) != ''){
             return $query->where('name', 'like', '%'.$search.'%');
         }
-        
+
     }
 }

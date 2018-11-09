@@ -61,7 +61,26 @@ class ProductController
   *@param {function} success //callbak que se ejecuta cuando el servidor response, se le pasan la respuesta del sevidor
   */
   dellTag(id,tag, success){
-    this.product.dellTag(id,tag, response => success(response) ) 
+    this.product.dellTag(id,tag, response => success(response) )
+  }
+
+  /**
+  *Pide al modelo editar un producto
+  *@param {Formdata} formData //datos a modifica
+  *@param {function} success //callback que se ejecuta cuando el servidor responde, se le pasa la respuesta del servior.
+  *@return {void} ejecuta una callbak en el success
+  */
+  edit(formData, success){
+    this.product.edit(formData, response => success(response) );
+  }
+
+  /**
+  *Obtine un producto
+  *@param {int} id //id del producto a obtener
+  *@param {function} callback //funcion que se ejecuta cuando el servidor responde
+  */
+  getProduct(id, callback){
+    this.product.getProduct(id, data => callback(data));
   }
 
 }

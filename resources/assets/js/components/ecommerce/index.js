@@ -1,6 +1,7 @@
 import React            from 'react'
 import ReactDOM         from 'react-dom'
 import Cropper          from 'cropperjs'
+import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 import FatherCategoryController   from '../../controllers/fatherCategoryController.js'
 import CategoryController         from '../../controllers/categoryController.js'
 import SubCategoryController      from '../../controllers/subCategoryController.js'
@@ -35,7 +36,10 @@ class Ecommerce extends React.Component
           routeProducts   = {storage:this.props.routes.storage,
                              storageImg:this.props.routes.storageImage,
                              getProducts:this.props.routes.getProducts,
-                             deleteTag:this.props.routes.deleteTag}
+                             getProduct:this.props.routes.getProduct,
+                             deleteTag:this.props.routes.deleteTag,
+                             editProduct: this.props.routes.editProduct,
+                             filterProducts: this.props.routes.filterProducts}
 
 		this.state = {pageForm           :'first', //renderiza un formulario, "first" los datos iniciales, "second" para agregar imagenes
                   productCreated     : false, //almacenara el id del producto creado, para pasarlo a la  arga de imagenes
@@ -51,6 +55,7 @@ class Ecommerce extends React.Component
                   gifFilter          : false, //cuando es true muestra un gif para el filtrador por nombre
                   newTags            : [], //tags nuevos a crear
                   fatherCategories   : [], //categorias padre
+                  productDetail      : this.props.products[0], //producto que e muestra en el modal de detalles
                  }
 
     this.fatherCategoryController = new FatherCategoryController(this.props.token, routesFatherCat); //modelo categorias padres
@@ -69,6 +74,7 @@ class Ecommerce extends React.Component
 	  this.handlerPrev     = this.handlerPrev.bind(this); //maneja el onClick del boton prev
     this.onTagAdd        = this.onTagAdd.bind(this); //callback cuando se agrega un tag
     this.onTagDelete     = this.onTagDelete.bind(this); //callback que se ejecuta cuando se elimina un tag del input de tags
+    this.showModalView   = this.showModalView.bind(this); //función que abre el modal para ver un proiducto en detalle
 	}
 
 
@@ -99,33 +105,21 @@ class Ecommerce extends React.Component
 		ev.preventDefault()
 		$('#editProductPrice').val($('#editProductPrice').val().replace(/[.]/gi,"")) //quitarle los puntos al precio
 		var formData = new FormData(document.getElementById('formEditProduct'))
+    formData.append('agregarTagsCrearProducto',JSON.stringify(this.state.newTags))
 
-		$.ajax({
-			url:this.props.routes.edit,
-			type:'POST',
-			data: formData,
-			dataType:"JSON",
-			cache: false,
-			contentType: false,
-			processData: false,
-				beforeSend:function(){
-					$("#BlockRequestAjax").fadeIn();
-				}.bind(this),
-				success:function(response){
-					if(response.saved){
-						helper.showMessage("success","Datos editados", "Editar fotos")
-						this.setState({pageFormEdit:'second',
-							           typeEdit:response.product.type,
-					                   productEditing:response.product.id})
-					}
-					else{
-						response.errors.forEach( error => {
-							helper.showMessage("error","Algo salió mal",error)
-						})
-					}
-					$("#BlockRequestAjax").fadeOut();
-				}.bind(this)
-		})
+    this.productController.edit(formData, response => {
+        if(response.saved){
+          helper.showMessage("success","Datos editados", "Editar fotos")
+          this.setState({pageFormEdit:'second',
+                         typeEdit:response.product.type,
+                         productEditing:response.product.id})
+        }
+        else{
+          response.errors.forEach( error => {
+            helper.showMessage("error","Algo salió mal",error)
+          })
+        }
+    })
 	}
 
 	//renderiza uno de los formulario
@@ -209,34 +203,23 @@ class Ecommerce extends React.Component
 	//no muetsre el formulario de edicion de fotos
 	//hace un llamado ajax para refrescar la información del producto que se estaba editando en el modal
 	finishUpdate(){
-		var type = this.state.pageFormEdit == "first" ? this.state.productEdit.type : this.state.typeEdit,
-		    id   = this.state.pageFormEdit == "first" ? this.state.productEdit.id : this.state.productEditing
-		$.ajax({
-			url:this.props.routes.getProduct,
-			type:'POST',
-			data:{id  :id,
-				  type:type},
-			dataType:'JSON',
-			 beforeSend:function(){
-			 }.bind(this),
-			 success:function(response){
-			 	if(response.exist){
-			 		var newProd = [];
-			 		this.state.products.forEach( prod => {
-		 				if(this.state.productEdit.id == prod.id && prod.type == this.state.productEdit.type){
-		 					newProd.push(response.product)
-		 				}
-			 			else{
-			 				newProd.push(prod)
-			 			}
-			 		})
-			 	    this.setState({products :newProd})
-			 	}
+		var id = this.state.pageFormEdit == "first" ? this.state.productEdit.id : this.state.productEditing
+    this.productController.getProduct(id, response => {
+      if(response.exist){
+        var newProd = [];
+        this.state.products.forEach( prod => {
+          if(this.state.productEdit.id == prod.id && prod.type == this.state.productEdit.type){
+            newProd.push(response.product)
+          }
+          else{
+            newProd.push(prod)
+          }
+        })
+          this.setState({products :newProd})
+      }
 
-			 	this.setState({pageFormEdit:'first'});
-
-			 }.bind(this)
-		})
+      this.setState({pageFormEdit:'first'});
+    })
 	}
 
 	//muestra el modal de editar producto
@@ -256,6 +239,21 @@ class Ecommerce extends React.Component
     instance.open();
 	  //abrir el modal
 	}
+
+  /**
+  *Muestra el modal donde se ve el produto
+  */
+  showModalView(e){
+    e.preventDefault()
+    var id = e.target.getAttribute("data-id")
+    console.log(`[debug] modal data-id: ${id}`);
+    this.productController.getProduct(id, product => {
+      console.log(`[debug] este es producto: ${product}`, product);
+      this.setState({productDetail:product.product})
+    });
+    var instance = M.Modal.getInstance(document.getElementById('modalViewProduct'));
+    instance.open();
+  }
 
 	//renderiza los option de las categorias padres
 	renderOptFatherCategories(){
@@ -323,7 +321,8 @@ class Ecommerce extends React.Component
 
 		if(father != "" || catego != "" || subcat != "" ||name != "" ){
 			$.ajax({
-				url:this.props.routes.getFather,
+				url:this.props.routes.filterProducts,
+        headers:{'X-CSRF-TOKEN': this.props.token},
 				type:"POST",
 				data:{father:father,catego:catego,subcat:subcat,name:name},
 				dataType:"JSON",
@@ -347,8 +346,9 @@ class Ecommerce extends React.Component
 		}
 		else{
 			$.ajax({
-				url:this.props.routes.getLastProducts,
+				url:this.props.routes.getProducts,
 				type:'POST',
+        headers:{'X-CSRF-TOKEN': this.props.token},
 				dataType:'JSON',
 				 beforeSend:function(){
 				 	$("#BlockRequestAjax").fadeIn();
@@ -448,9 +448,10 @@ class Ecommerce extends React.Component
 
                           <ProducPanel products={this.state.products}
                                        defaultImg={this.props.defaultImg}
-                                       showModalEdit={this.showModalEdit}/>
+                                       showModalEdit={this.showModalEdit}
+                                       showModalView={this.showModalView}/>
 
-                                     <div className="col m12 m-t">
+                          <div className="col m12 m-t">
                               <div className="col-md-4 col-md-offset-5">
                                {this.state.next == true ? <button className="btn btn-default" data-order="next" data-position={this.state.products[0]["created_at"]} onClick={this.handlerPrev}>{"<"}</button> : ""}
                                {this.state.prev == true ? <button className="btn btn-default" data-order="prev" data-position={this.state.products[this.state.products.length - 1]["created_at"]} onClick={this.handlerPrev}>></button> : ""}
@@ -467,7 +468,7 @@ class Ecommerce extends React.Component
                   </div>
               </div>
 
-      				 <ModalEdit fatherCategories={this.state.fatherCategories}
+      			<ModalEdit fatherCategories={this.state.fatherCategories}
                          routeGetCategories={this.props.routes.getCategories}
                          routeGetSubCategories={this.props.routes.getSubCategories}
                          routeProductsOfAccessory={this.props.routes.productsOfAccessory}
@@ -492,7 +493,11 @@ class Ecommerce extends React.Component
                          categoryController={this.categoryController}
                          brandController={this.brandController}
                          productController={this.productController}
+                         onChipAdd={this.onTagAdd}
+                         onChipDelete={this.onTagDelete}
                          />
+
+                       <ModalViewProduct product={this.state.productDetail}/>
 
   			   </div>)
 	}
@@ -503,6 +508,7 @@ class Ecommerce extends React.Component
 //Props: products       -> object    Productos a mostrar
 //       defaultImg     -> string    ruta de la imagen default
 //       showModalEdit  -> function
+//       showModalView  -> funcion    muestra el modal de productos
 class ProducPanel extends React.Component
 {
 	buildProducts(){
@@ -515,7 +521,8 @@ class ProducPanel extends React.Component
 			row.push(<Produt product={product}
                        defaultImg={this.props.defaultImg}
                        key={"content-product"+product.id}
-                       showModalEdit={this.props.showModalEdit}/>)
+                       showModalEdit={this.props.showModalEdit}
+                       showModalView={this.props.showModalView}/>)
 
 			iteracion++;
 			if(iteracion == 5){
@@ -547,6 +554,7 @@ class ProducPanel extends React.Component
 //props: product        -> object    Información del producto
 //       defaultImg     -> string    Ruta de la imagen default
 //       showModalEdit  -> function
+//       showModalView  -> funcion   muestra el modal de detalles
 class Produt extends React.Component
 {
 	componentDidMount(){
@@ -556,21 +564,24 @@ class Produt extends React.Component
 	}
 
 	render(){
-
 		var images = this.props.product.type == "product" ? "shop_images" : "shop_accessoryimages";
 		return(<div className="col m3">
                 <div className="card">
                     <div className="card-image">
                       <img className="responsive-img" src={this.props.product[images].length > 0 ? this.props.product[images][0].route : this.props.defaultImg}/>
-                      <span className="card-title">Card Title</span>
-                      <a href={this.props.product.detail} target="_blank" className="btn-floating halfway-fab waves-effect waves-light red"><i className="material-icons">add</i></a>
+                      <span className="card-title">
+                        <a className="product-name modal-trigger" href="#modalViewProduct" data-id={this.props.product.id} onClick={this.props.showModalView}> {this.props.product.name}</a>
+                      </span>
+                      <a className="btn-floating halfway-fab waves-effect waves-light red modal-trigger" href="#modalViewProduct" data-id={this.props.product.id} onClick={this.props.showModalView}>
+                        <i className="material-icons" data-id={this.props.product.id}>add</i>
+                      </a>
                     </div>
                     <div className="card-content">
                       <span className="product-price">
                           <small className="text-muted">{this.props.product.shop_subcategory.shop_category.shop_fathercategory.name+" / "+this.props.product.shop_subcategory.shop_category.name+" / "+this.props.product.shop_subcategory.name}</small>
                           <br></br>
                           ${helper.formatoNumero(this.props.product.price)}<br></br>
-                          <a href={this.props.product.detail} className="product-name"> {this.props.product.name}</a>
+
                           <div className="m-t text-righ">
                               {/*<button className="btn btn-xs btn-outline btn-primary" data-id={this.props.product.id} onClick={this.props.showModalEdit}> <i className="material-icons">edit</i></button> */}
                               <a className="waves-effect waves-light btn modal-trigger" data-id={this.props.product.id} onClick={this.props.showModalEdit} href="#modalEditProduct"><i className="material-icons" data-id={this.props.product.id}>edit</i></a>
@@ -845,8 +856,8 @@ class FormCreate extends React.Component
 		if( this.state.otherSubCategory ){
 			return <div className="row m-t-xs">
   						<div className="input-field col s12">
-                <input className="active" name="nuevaSubCategoriaCrearProducto" id="createProductNewSubCategory" required/>
-  							<label htmlFor="nuevaSubCategoriaCrearProducto">Nombre sub-categoria</label>
+                <input className="validate" name="nuevaSubCategoriaCrearProducto" id="createProductNewSubCategory" required/>
+  							<label className="active" htmlFor="nuevaSubCategoriaCrearProducto">Nombre sub-categoria</label>
   						</div>
   				   </div>
 		}
@@ -862,7 +873,13 @@ class FormCreate extends React.Component
 	renderOptionsBrands(){
 		var opts = []
 		this.state.brands.forEach( brand => {
-			opts.push(<option value={brand.id} key={"optBrand-"+brand.id}>{brand.name}</option>)
+      if(this.state.valueMarca == brand.id){
+          opts.push(<option value={brand.id} key={"optBrand-"+brand.id} defaultValue >{brand.name}</option>)
+      }
+      else{
+          opts.push(<option value={brand.id} key={"optBrand-"+brand.id}>{brand.name}</option>)
+      }
+
 		})
 		return opts
 	}
@@ -935,16 +952,18 @@ class FormCreate extends React.Component
 	renderSwitchShowProduct(){
 		if(this.props.editOrCreate == "edit"){
 			return <div className="row m-t-xs">
-						<div className="col-md-4">
-							<label>Mostrar producto: </label>
-						</div>
-						<div className="col-md-8">
-						    <div className="switchOnOff">
-							    <input type="checkbox" name="mostrarProducto" className="switchOnOff-checkbox" id="switchShowProdutEdit"/>
-							    <label className="switchOnOff-label" htmlFor="switchShowProdutEdit"></label>
-							</div>
-						</div>
-					</div>
+                <div className="col s12">
+                  <label>Mostrar producto: </label>
+                  <div className="switch">
+                    <label>
+                      { /*Off*/}
+                      <input type="checkbox" name="mostrarProducto" id="switchShowProdutEdit"/>
+                      <span className="lever"></span>
+                      { /*On*/}
+                    </label>
+                  </div>
+                </div>
+              </div>
 		}
 	}
 
@@ -1087,10 +1106,10 @@ class FormCreate extends React.Component
 		   })
 
 		   this.setState({'type'                 : nextProps.productEdit.type,
-		   				  'otherFather'          : false,
-                          'otherCategory'        : false,
-                          'otherSubCategory'     : false,
-                          'valueFathercate'      : nextProps.productEdit.shop_subcategory.shop_category.shop_fathercategory.id, //el valor del value del delect de father category
+		   				        'otherFather'          : false,
+                      'otherCategory'        : false,
+                      'otherSubCategory'     : false,
+                      'valueFathercate'      : nextProps.productEdit.shop_subcategory.shop_category.shop_fathercategory.id, //el valor del value del delect de father category
 		                  'valCategory'          : nextProps.productEdit.shop_subcategory.shop_category.id, //categoria del producto, establecerlo en el select
 		                  'currentCategory'      : nextProps.productEdit.shop_subcategory.shop_category.id,
 		                  'valsubcategory'       : nextProps.productEdit.shop_subcategory.id, //subcategoria del producto
@@ -1121,7 +1140,7 @@ class FormCreate extends React.Component
 		   		this.setState({'valHaveAccessory':false});
 		   }
 
-		   document.getElementById('editShowPrice').checked = nextProps.productEdit.showprice == "si" ? true : false;
+
 		   document.getElementById('switchShowProdutEdit').checked = nextProps.productEdit.showproduct == "si" ? true : false;
 		   $('#'+this.props.idFieldDescription).summernote('code', nextProps.productEdit.description); //mostrar la descripcon en el summernote
 
@@ -1129,6 +1148,14 @@ class FormCreate extends React.Component
 	}
 
 	render(){
+    var brandOptTitle;
+
+    if(this.props.editOrCreate == "edit"){
+      brandOptTitle = <option value="" disabled >Marca</option>
+    }
+    else{
+      brandOptTitle = <option value="" disabled defaultValue>Marca</option>
+    }
 
     if(this.state.tags.length > 0){ //si hay tags, los renderizamos
 			var tags = [];
@@ -1163,7 +1190,6 @@ class FormCreate extends React.Component
 
     						{this.toggleInputOtherSubCategory()}
 
-                { console.log(`[debug] descripcion ${this.props.editOrCreate == "edit" ? "active" : ""}`) }
     						<div className="row m-t-xs">
     							<div className="input-field col s12">
     								<textarea className="materialize-textarea" name="metaDescripcionCrearProducto" id="createProductDescriptionMeta" value={this.state.valueMetaDescription} onChange={this.handlerChangeMetaDescription} required></textarea>
@@ -1221,8 +1247,8 @@ class FormCreate extends React.Component
 
     						<div className="row m-t-xs">
     							<div className="input-field col s12">
-                    <select className="" name="marcaCrearProducto" id="createProductMarca" value={this.state.valueMarca} onChange={this.handlerChangeBrand}>
-    									<option value="" disabled defaultValue>Marca</option>
+                    <select className="browser-default" name="marcaCrearProducto" id="createProductMarca" value={this.state.valueMarca} onChange={this.handlerChangeBrand}>
+    									{brandOptTitle}
     									{this.renderOptionsBrands()}
     									<option value="otra">Otra</option>
     								</select>
@@ -1237,23 +1263,6 @@ class FormCreate extends React.Component
                     <input className="form-control ponerPuntos" name="precioCrearProducto" id={this.props.editOrCreate == "create" ? "createProductPrice" : "editProductPrice"} value={this.state.valuePrice} onChange={this.handlerChangePrice} required/>
                     <label className="active" htmlFor={this.props.editOrCreate == "create" ? "createProductPrice" : "editProductPrice"}>Precio</label>
                   </div>
-    						</div>
-
-
-    						<div className="row m-t-xs">
-    							<div className="col s12">
-    								<label>Mostrar precio: </label>
-
-                    <div className="switch">
-                      <label>
-                        { /*Off*/ }
-                        <input type="checkbox" name="mostrarPrecioCrearProducto" defaultChecked={this.state.valueCheckPrice} id={this.props.switchShowPriceId}/>
-                        <span className="lever"></span>
-                        { /*On*/ }
-                      </label>
-                    </div>
-
-    							</div>
     						</div>
 
     						{this.renderInputId()}
@@ -1776,7 +1785,9 @@ class ModalEdit extends React.Component
                           subCategoryController={this.props.subCategoryController}
                           categoryController={this.props.categoryController}
                           brandController={this.props.brandController}
-                          productController={this.props.productController}/>
+                          productController={this.props.productController}
+                          onChipAdd={this.props.onChipAdd}
+                          onChipDelete={this.props.onChipDelete}/>
 		}
 		else{
 			return <FormEditImages productEdit={this.props.productEdit}
@@ -1784,30 +1795,27 @@ class ModalEdit extends React.Component
 			                       defaultImg={this.props.defaultImg}
 			                       routeSubmit={this.props.routeUpImge}
                              token={this.props.token}
-			                       routeDeleteImg={this.props.routeDeleteImg}/>
+			                       routeDeleteImg={this.props.routeDeleteImg}
+                             productController={this.props.productController}/>
 		}
 	}
 
+  closeModal(){
+    var instance = M.Modal.getInstance(document.getElementById('modalEditProduct'));
+    instance.close();
+  }
+
 	renderBtnFinish(){
 		if(this.props.pageFormEdit == "second"){
-	        return <button type="button" className="btn btn-primary" data-dismiss="modal">Finalizar</button>
+	        return <button type="button" className="btn btn-primary" data-dismiss="modal" onClick={this.closeModal}>Finalizar</button>
 		}
 	}
 
 	componentDidMount(){
     var elems = document.querySelectorAll('.modal');
-    var instances = M.Modal.init(elems, {});
+    var instances = M.Modal.init(elems, {onCloseStart:this.props.finishUpdate});
 
 		var finishUpdate = this.props.finishUpdate
-
-		$('#modalEditProduct').on('shown.bs.modal', function (e) {
-		  $('#editProductTags').trigger("chosen:updated");
-		})
-
-		$('#modalEditProduct').on('hidden.bs.modal', function (e) {
-		   finishUpdate()
-		})
-
 	}
 
 	render(){
@@ -1820,12 +1828,14 @@ class ModalEdit extends React.Component
 
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn btn-default" data-dismiss="modal">Cancelar</button>
+                <button type="button" className="btn btn-default" data-dismiss="modal" onClick={this.closeModal}>Cancelar</button>
 				        {this.renderBtnFinish()}
               </div>
             </div>)
 	}
 }
+
+
 
 
 //formulario para editar las fotos de un producto
@@ -1834,6 +1844,8 @@ class ModalEdit extends React.Component
 //       defaultImg          -> string    Ruta de la imagen por defecto
 //       routeSubmit         -> string    Ruta para subir nuevas imagenes
 //       token               -> string    Token para realizar peticiones ajax
+//       routeDeleteImg      -> string   ruta para eliminar imagen
+//       productController   -> ProductController controlador de productos
 class FormEditImages extends React.Component
 {
 	constructor(props){
@@ -1902,7 +1914,8 @@ class FormEditImages extends React.Component
                                      showBtnFinish={this.showBtnFinish}
                                      update={true}
                                      token={this.props.token}
-                                     imgId={img.id}/>)
+                                     imgId={img.id}
+                                     productController={this.props.productController}/>)
 		})
 		return render
 	}
@@ -1922,7 +1935,8 @@ class FormEditImages extends React.Component
 						                                            showBtnFinish={this.showBtnFinish}
 						                                            update={false}
                                                         token={this.props.token}
-						                                            imgId={false}/>)}
+						                                            imgId={false}
+                                                        productController={this.props.productController}/>)}
 
 			 		<div className="col-md-12">
 						<button className="btn btn-default pull-right" onClick={this.appendInputPic}>Agregar foto</button>
@@ -1933,6 +1947,120 @@ class FormEditImages extends React.Component
 }
 
 
+
+
+/**
+* Modal que muestra la información de un producto
+* @prop {object} product objeto con la infomación del producto a mostrar
+*/
+class ModalViewProduct extends React.Component
+{
+  constructor(props){
+      super(props)
+
+      this.state = { fotos : []}
+  }
+
+  componentDidMount(){
+    var elems = document.querySelectorAll('.modal');
+    var instances = M.Modal.init(elems, {});
+	}
+
+  /**
+  * Renderiza los tags del producto
+  * @return {array} un array con los tags
+  */
+  renderTags(){
+    var tags = []
+    this.props.product.shop_tags.forEach( tag => {
+      tags.push(<div className="chip" key={tag.name}>{tag.name}</div>)
+    })
+    return tags;
+  }
+
+  componentWillReceiveProps(nextProps){
+    console.log(`[debug] recibi nuevos props ${nextProps}`, nextProps);
+    console.log(`[debug] nextProps.product.shop_images = ${nextProps.product.shop_images}`, nextProps.product.shop_images);
+    let carrousel = []
+    if(nextProps.product.shop_images){
+      nextProps.product.shop_images.forEach( image => {
+        carrousel.push(<a className="carousel-item" key={image.route}><img src={image.route}/></a>)
+        console.log(`[debug] foto ruta: ${image.route}`);
+      })
+      this.setState({fotos:carrousel})
+      /*var elemCar = document.querySelectorAll('#carouselProduct');
+      console.log(`[debug] elemCar: ${elemCar}`, elemCar);
+      var instanceCar = M.Carousel.init(elemCar,{}) */
+    }
+  }
+
+  render(){
+		return(<div id="modalViewProduct" className="modal modal-xl">
+              <div className="mod-content">
+
+				        <h4 className="modal-title center-align" id="viewproduct">{this.props.product.name}</h4>
+                <div className="row">
+                  <div className="col s12 m6">
+
+                    <Carousel fotos={this.props.product.shop_images}/>
+
+                  </div>
+                  <div className="col s12 m6">
+                      <small className="text-muted">{this.props.product.shop_subcategory.shop_category.shop_fathercategory.name+" / "+this.props.product.shop_subcategory.shop_category.name+" / "+this.props.product.shop_subcategory.name}</small>
+                      <br/>
+                      {this.props.product.meta_description}
+                      <br/>
+                      <div dangerouslySetInnerHTML={{__html: this.props.product.description}}></div>
+                      <br/>
+                      {this.renderTags()}
+                      <br/>
+                      {this.props.product.shop_brand.name}
+                      <br/>
+                      ${helper.formatoNumero(this.props.product.price)}
+                </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+
+              </div>
+            </div>)
+	}
+}
+
+/**
+* Componente, Carousel con las fotos del producto
+* @prop {array} fotos //array con las fotos del producto
+*/
+class Carousel extends React.Component
+{
+  renderImgs(){
+    var renderimg = []
+    if(this.props.fotos){
+      this.props.fotos.forEach( img => {
+        renderimg.push(<a className="carousel-item" key={img.route}><img src={img.route}/></a>)
+      })
+    }
+
+    return renderimg;
+  }
+
+  componentDidMount(){
+
+  }
+
+  componentWillReceiveProps(nextProps){
+    setTimeout( () => {
+      var elemCar = document.querySelectorAll('#carouselProduct');
+      var instanceCar = M.Carousel.init(elemCar,{indicators:true})
+    }, 1000);
+  }
+
+  render(){
+    return(<div className="carousel" id="carouselProduct">
+              {this.renderImgs()}
+           </div>)
+  }
+}
 
 
 

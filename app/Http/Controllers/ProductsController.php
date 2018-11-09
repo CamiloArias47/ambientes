@@ -76,11 +76,12 @@ class ProductsController extends Controller
         foreach ($products as $product) {
             $product->type = "product";
             $product->shop_images;
+            $product->shop_brand;
             $product->shop_subcategory->shop_category->shop_fathercategory;
             $product->shop_tags;
             $product->shop_accessories;
 
-            $product->detail = "Ruta a los detalles del producto";
+            $product->detail = "#";
 
             if(count($product->shop_images) > 0){
                 foreach ($product->shop_images as $image) {
@@ -91,25 +92,6 @@ class ProductsController extends Controller
         return $products;
     }
 
-    //formatea los accesorios para ser utilizados por la vista react.js
-    public function formatAccessories($accessories){
-        foreach ($accessories as $accessory) {
-            $accessory->type = "accessory";
-            $accessory->shop_accessoryimages;
-            $accessory->shop_subcategory->shop_category->shop_fathercategory;
-            $accessory->shop_tags;
-            $accessory->shop_products;
-
-            $accessory->detail = route('ecommerce.accesory.detail',$accessory->id);
-
-            if(count($accessory->shop_accessoryimages) > 0){
-                foreach ($accessory->shop_accessoryimages as $image) {
-                    $image->route = asset("image/ecommerce/products/".$image->route);
-                }
-            }
-        }
-        return $accessories;
-    }
 
 
     //ordenamiento burbuja
@@ -429,7 +411,6 @@ class ProductsController extends Controller
         $product->price               = $request->precioCrearProducto;
         $product->shop_subcategory_id = $subcategoria_id;
         $product->showproduct         = "no";
-        $product->showprice           = ($request->mostrarPrecioCrearProducto == "on")?"si":"no";
 
         if( $product->save() ){
             if( count($request->tagsCrearProducto) > 0 ){ //relacionamos los tags que selecciono
@@ -469,6 +450,118 @@ class ProductsController extends Controller
         $nameespacios       = str_replace($raros, $norma, $nombre);
         return $nameespacios;
     }
+
+    //Se encarga de revisar si los tags que envio en la edicion ya existen en la base de datos, si no existe crea
+    //la relacion
+    //addMoreTags($product, $tags) -> void
+    //$product                     == Shop_product
+    //$tags                        -> array       Array con los tags que se enviaron el el formulario de edicion
+    public function addMoreTags($product, $tags){
+        foreach ($tags as $newTag ) {
+            $exist = false;
+            foreach ($product->shop_tags as $oldTag) {
+                if($newTag == $oldTag->id){
+                    $exist = true;
+                }
+            }
+
+            if(!$exist){
+               $product->shop_tags()->attach($newTag); //agregarlo
+            }
+        }
+    }
+
+
+    /**retorna los productos de una categoria padre
+    * @param {int} $id  Id de la categoria padre
+    * @return {array}
+    */
+    public function getProductsFilterByFather($id)
+    {
+        $products    = [];
+        $accessories = [];
+        $father = Shop_fathercategory::find($id);
+
+        foreach ($father->shop_categories as $category) {
+            $category->shop_subcategories;
+            foreach ($category->shop_subcategories as $subcategory) {
+                $subcategory->shop_products;
+                foreach ($subcategory->shop_products as $product) {
+                    $products[] = $product;
+                }
+            }
+        }
+
+        $products = $this->formatProducts($products);
+
+        return $products;
+    }
+
+
+
+    /**retorna los productos de una categoria
+    * @param {int} $id  Id de la categoria
+    * @return {array}
+    */
+    public function getProductsFilterByCategory($id)
+    {
+        $products = [];
+        $category = Shop_category::find($id);
+
+            $category->shop_subcategories;
+            foreach ($category->shop_subcategories as $subcategory) {
+                $subcategory->shop_products;
+                foreach ($subcategory->shop_products as $product) {
+                    $products[] = $product;
+                }
+            }
+
+        $products    = $this->formatProducts($products);
+
+        return $products;
+    }
+
+
+    /**retorna los productos de una sub-categoria
+    * @param {int} $id  Id de la sub-categoria
+    * @return {array}
+    */
+    public function getProductsFilterBySubCategory($id)
+    {
+        $products    = [];
+        $subcategory = Shop_subcategory::find($id);
+
+        $subcategory->shop_products;
+        foreach ($subcategory->shop_products as $product) {
+            $products[] = $product;
+        }
+
+        $products    = $this->formatProducts($products);
+
+        return $products;
+    }
+
+
+    /**filtra los productos dados, por el nombre
+    * @param {array} $products  Productos a evaluar
+    * @param {atring} $name  Nombre que se usara de filtro
+    * @return {array}
+    */
+    public function getProductsWhereName($products, $name)
+    {
+        $reProducts = [];
+        $name = strtolower($name);
+        foreach ($products as $product) {
+            $productName = strtolower($product['name']);
+            $pos = strrpos($productName, $name);
+            if ($pos !== false) {
+               $reProducts[] = $product;
+            }
+        }
+
+        return $reProducts;
+    }
+
 
 
 
@@ -634,4 +727,157 @@ class ProductsController extends Controller
 
       return response()->json(["detach" => $detach, "tags" => $product->shop_tags]);
   }
+
+
+  /**
+  *Maneja peticiones post para editar un producto
+  *@param {Request} $request //datos enviados en la peticion
+  *@return {json}
+  */
+  public function editProduct(Request $request)
+  {
+      $saved  = false;
+      $errors = ["Ok"];
+
+      if( !is_bool($this->validateStorage($request)) ){ //validar la información, si no retorna un boleano, la validacion falló
+          return $this->validateStorage($request);
+      }
+
+      $save_tags        = ($request->crearTagsCrearProducto == "on") ? true : false;
+      $productUpdated   = false;
+
+      $clasifications = $this->handlerStorageClasification($request); //metodo que se encarga de las catgorias, de crearlas, si es necesario o solo retorna la subcategoria seleccionada
+      if($clasifications["subcategoria_id"] != null){
+          $subcategoria_id = $clasifications["subcategoria_id"];
+      }
+      else{
+          $errors = $clasifications["errors"];
+      }
+
+      $brands = $this->handlerStorageBrands($request);
+
+      if($brands["marca_id"] != null){
+          $marca_id = $brands["marca_id"];
+      }
+      else{
+          $errors = $brands["errors"];
+      }
+
+      if($save_tags){
+          $tags = $this->saveTags(json_decode($request->agregarTagsCrearProducto));
+      }
+
+      if( isset($subcategoria_id) && isset($marca_id) ){
+           //:::::::::::::::::EDITAR PRODUCTO:::::::::::::::::::::::
+          if($request->accesorioCrearProducto != "" && $request->accesorioCrearProducto == "on"){ //si lo cambio a accesorio
+              $update  = "change";
+          }
+          else{ //si continua siendo un producto
+              $update = "normal"; //establecemos update como normal para que haga una actualizacion normal
+          }
+
+
+          $product =  Shop_product::find($request->editProduct_id);
+
+          $product->name                = $request->nombreCrearProducto;
+          $product->description         = $request->descripcionCrearProducto;
+          $product->meta_description    = $request->metaDescripcionCrearProducto;
+          $product->shop_brand_id       = $marca_id;
+          $product->price               = $request->precioCrearProducto;
+          $product->shop_subcategory_id = $subcategoria_id;
+          $product->showproduct         = ($request->mostrarProducto == "on") ? "si" : "no";
+
+          if( $product->save() ){
+
+              if( $request->tagsCrearProducto != null && count($request->tagsCrearProducto) > 0 ){ //relacionamos los tags que selecciono
+                  $this->addMoreTags($product, $request->tagsCrearProducto);
+              }
+
+              if( isset($tags) ){
+                  foreach ($tags as $newTag) {
+                      $product->shop_tags()->attach($newTag["id"]); //creamos el registro en la table pivot
+                  }
+              }
+
+              $product->type  = "product";
+              $saved          = true;
+              $productUpdated = $product;
+          }
+      }
+
+
+
+      return response()->json(["saved" => $saved, "errors" => $errors, "product" => $productUpdated ]);
+  }
+
+
+
+  /**
+  *Maneja peticiones post y retorna un producto
+  *@param {Request} $request //datos enviados en la petición
+  *@return {json}
+  */
+  public function responseGetProduct(Request $request)
+  {
+      $product = Shop_product::find($request->id);
+      $exist = ( $product ) ? true : false;
+
+
+      if($exist){
+              $product->type = "product";
+              $product->shop_tags;
+              $product->shop_images;
+              $product->shop_subcategory->shop_category->shop_fathercategory;
+              $product->shop_brand;
+              $product->shop_accessories;
+              $product->detail = "ruta detalles";
+
+              foreach ($product->shop_images as $image) {
+                  $image->route = asset("assets/img/products/".$image->route);
+              }
+      }
+      else{
+          $exist = false;
+      }
+
+      return response()->json(["product" => $product, "exist" => $exist]);
+  }
+
+
+
+  /**
+  * maneja peticiones post retorna los productos de una categoria padre
+  */
+  public function filterProducts(Request $request)
+  {
+      //father, catego, subcat, name
+      //si solo eligio una categoria padre
+      if($request->father != "" && $request->catego == "" && $request->subcat == ""){
+          $products = $this->getProductsFilterByFather($request->father);
+      }
+      //si eligio una categoria (descartamos la categoria padre)
+      else if($request->catego != "" && $request->subcat == ""){
+          $products = $this->getProductsFilterByCategory($request->catego);
+      }
+      //si selecciona una subcategoria (ahora no nos interesa ni la categoria, ni la categoria padre)
+      else if($request->subcat != ""){
+          $products = $this->getProductsFilterBySubCategory($request->subcat);
+      }
+
+      if($request->name != "" && ($request->father != "" || $request->catego != "" || $request->subcat != "") ){
+          $products = $this->getProductsWhereName($products, $request->name);
+      }
+
+      if($request->name != "" && ($request->father == "" && $request->catego == "" && $request->subcat == "") ){
+
+          $products    = Shop_product::where("name","LIKE","%".$request->name."%")->orderBy("name","asc")->get();
+
+          $products    = $this->formatProducts($products);
+      }
+
+
+      return response()->json(["father" => $products]);
+  }
+
+
 }

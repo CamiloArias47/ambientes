@@ -40,6 +40,23 @@ class Product
   }
 
   /**
+  *Obtine un producto
+  *@param {int} id //id del producto a obtener
+  *@param {function} callback //funcion que se ejecuta cuando el servidor responde
+  */
+  getProduct(id, callback){
+
+    var opts = this.opts
+    opts.body = JSON.stringify({id: id}),
+
+    fetch(this.routes.getProduct, opts)
+      .then( res => res.json() )
+      .then( data => callback(data) )
+      .catch( e => console.error(`[request] error al obtener el producto`) );
+  }
+
+
+  /**
   *Envia los datos para guardar un nuevo producto
   * @param {FormData} formData //Formulario de creacion de producto
   * @param {function} success //función que se ejecuta cuando responde el servidor con los los datos de respuesta
@@ -61,6 +78,32 @@ class Product
           success(response)
         }
  		})
+   }
+
+
+   /**
+   *Realiza una peticion post con los datos de un producto para editarlo
+   *@param {Formdata} formData //datos a modifica
+   *@param {function} success //callback que se ejecuta cuando el servidor responde, se le pasa la respuesta del servior.
+   *@return {void} ejecuta una callbak en el success
+   */
+   edit(formData, success){
+     $.ajax({
+   			url:this.routes.editProduct,
+        headers:{'X-CSRF-TOKEN': this.token},
+   			type:'POST',
+   			data: formData,
+   			dataType:"JSON",
+   			cache: false,
+   			contentType: false,
+   			processData: false,
+   				beforeSend:function(){
+
+   				},
+   				success:function(response){
+   					success(response)
+   				}
+   		})
    }
 
 

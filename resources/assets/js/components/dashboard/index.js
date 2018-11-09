@@ -33,7 +33,8 @@ class Main extends React.Component{
   }
 
   render(){
-    return(<Router>
+
+        return(<Router>
              <div>
                 <ul id="slide-out" className="sidenav sidenav-fixed">
                   <li>
@@ -85,14 +86,16 @@ class Main extends React.Component{
                                                                                                  maxUpload={this.props.maxUpload}
                                                                                                  products={this.props.products}
                                                                                                  prev={this.props.prev}
-                                                                                                 setTitleModule={this.setTitleModule} /> } />
+                                                                                                 setTitleModule={this.setTitleModule} /> }
+                    />
+
+
                   </div>
                 </main>
              </div>
            </Router>)
   }
 }
-
 
 
 setTimeout(()=>{

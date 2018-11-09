@@ -90,7 +90,10 @@
                     getTags : "{!! route('products.tags') !!}",
                     storageImage : "{!! route('products.storageimg') !!}",
                     getProducts : "{!! route('products.getproducts') !!}",
-                    deleteTag : "{!! route('products.deleteTag')!!}" };
+                    deleteTag : "{!! route('products.deleteTag')!!}" ,
+                    editProduct : "{!! route('products.edit') !!}",
+                    getProduct : "{!! route('products.getProduct') !!}",
+                    filterProducts : "{!! route('products.filter')!!}"};
 
           //estas variables es mejor setearlas cuando se cargue el componente con un ajax o un fetch
           var fatherCategories = {!!$fatherCategories!!},
