@@ -584,10 +584,10 @@ class ProductsController extends Controller
   */
   public function getProducts(Request $request)
   {
-      $products         = $this->getLastProducts();
-      $lastP            = end($products);
+      $products = $this->getLastProducts();
+      $lastP    = end($products);
 
-      return response()->json(["products" => $this->getLastProducts(),
+      return response()->json(["products" => $products,
                                "prev"     => $this->thereIsMorePrevNext($lastP[0]["created_at"],"<")]);
   }
 
