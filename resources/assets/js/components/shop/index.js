@@ -1,6 +1,7 @@
 import React     from 'react'
 import ReactDOM  from 'react-dom'
 import ProductController from '../../controllers/productController.js'
+import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 
 /**
 *Renderiza la barra de redes sociales
@@ -62,7 +63,7 @@ class Menu extends React.Component{
     				    </div>
     		        </li>
     		        <li>
-    		        	<span className="tittles rem1-5 tittlee">Ambientes sostenibles</span>
+                  <Link to="/ecotienda"><span className="tittles rem1-5 tittle">Ambientes sostenibles</span></Link>
     		        </li>
 
                 <li className="search">
@@ -201,34 +202,127 @@ class Banner extends React.Component{
 
 
 /**
-*
+* COntenedor principal que contiene los productos
+* @prop {ProductController} productController //instancia de productController para realizar peticiones a la API
+* @prop {string} defaultImg // imagen default de productoss
 */
 class ContenedorMain extends React.Component{
+
+  constructor(props){
+    super(props)
+    this.state = {products: []}
+  }
+
+  componentDidMount(){
+    this.props.productController.getProducts( data => {
+      console.log(`[debug] productos`, data);
+      this.setState({products:data.products})
+    })
+  }
+
+  renderCardProduct(){
+    let cards = []
+    var set = []
+    var i = 0,
+        j = 0;
+    this.state.products.forEach( product =>{
+      set.push(<CardProduct key={"cardProduct-id"+product.id}
+                              product={product}
+                              defaultImg={this.props.defaultImg}/>)
+      i++;
+      j++;
+      if(i == 3 || (this.state.products.length == j && i < 3) ){
+        cards.push(<div className="row" key={"rowproduct"+product.id}>{set}</div>)
+        set = [];
+        i = 0;
+      }
+    })
+
+    return cards
+  }
 
   render(){
     return(<div id="contenedorProductos">
             <center><h1>Últimos productos</h1></center>
             <div>
               <div className="row">
-                <div className="col s12 m6 l4">
-    							<div className="card">
-    								<div className="card-image waves-effect waves-block waves-light">
-    									<img className="activator" src="" />
-    								</div>
-    								<div className="card-content">
-    									<span className="card-title activator grey-text text-darken-4">Contenedores de sopa <i className="zmdi zmdi-more-vert right"></i></span>
-    									<p><a href="#">Más información.</a></p>
-    								</div>
-    								<div className="card-reveal">
-    									<span className="card-title grey-text text-darken-4">Contenedores de sopa <i className="zmdi zmdi-close right"></i></span>
-    									<p>Estas bandejas están hechas de Bagasse, un recurso fácilmente renovable: ¡es tallo de caña de azúcar! La calidad de estos platos superfuertes es asombrosa y lo mejor, ningún árbol se dañó para hacerlos.
-                      <br />El tamaño del compartimento miden 10 x 8 x 1.0 y tienen 5 compartimentos.
-                      </p>
-    								</div>
-    							</div>
-    						</div>
+                {this.renderCardProduct() }
               </div>
             </div>
+           </div>)
+  }
+}
+
+/**
+*Renderiza la tarjeta del producto
+* @prop {object} product //objeto con la información del producto
+* @prop {string} defaultImg //ruta de la imagen del producto por defecto
+*/
+class CardProduct extends React.Component{
+
+  constructor(props){
+    super(props)
+    this.state = {imgRoute : (this.props.product.shop_images.length > 0) ? this.props.product.shop_images[0].route : "#"}
+  }
+
+  renderTags(){
+    var tags = []
+    this.props.product.shop_tags.forEach( tag => {
+      tags.push(<div className="chip" key={"tag-"+tag.name+"id"+tag.id}>
+                 {tag.name}
+                </div>)
+    })
+    return tags
+  }
+
+
+  render(){
+    return(<div className="col s12 m6 l4">
+            <div className="card">
+              <div className="card-image waves-effect waves-block waves-light">
+                <img className="activator" src={ (this.props.product.shop_images.length > 0) ? this.props.product.shop_images[0].route : this.props.defaultImg } />
+              </div>
+              <div className="card-content">
+                <span className="card-title activator grey-text text-darken-4">{ this.props.product.name}<i className="zmdi zmdi-more-vert right"></i></span>
+                <p><a href="#">Más información.</a></p>
+              </div>
+              <div className="card-reveal">
+                <span className="card-title grey-text text-darken-4">{ this.props.product.name} <i className="zmdi zmdi-close right"></i></span>
+                <div dangerouslySetInnerHTML={{__html: this.props.product.description}}></div>
+                <div>{this.renderTags()}</div>
+              </div>
+            </div>
+          </div>)
+  }
+}
+
+/**
+* Renderiza el home de la ecommer
+* @prop {string} bannerImg //ruta de la imagen principal
+* @prop {ProductController} productController //instancia de productController para realizar peticiones
+* @prop {string} defaultImg //ruta de la imagen por defecto para productos sin imagen
+*/
+class Home extends React.Component{
+  render(){
+    return(<div>
+              <Banner bannerImg={this.props.bannerImg}/>
+              <ContenedorMain productController={this.props.productController}
+                              defaultImg={this.props.defaultImg}/>
+           </div>)
+  }
+}
+
+/**
+*
+*/
+class Match extends React.Component{
+  constructor(props){
+    super(props)
+  }
+
+  render(){
+    return(<div>
+            <h3>ID: {this.props.match.params.id}</h3>
            </div>)
   }
 }
@@ -243,30 +337,28 @@ class Index extends React.Component{
     super(props)
 
     var routesproducts = {getProducts: this.props.props.routes.getProducts}
-
     this.productController = new ProductController(this.props.props.token, routesproducts)
   }
 
-  componentDidMount(){
-    this.productController.getProducts( products => {
-      console.log(`[debug] Tengo todos los productos: ${products}`, products);
-    })
-  }
-
   render(){
-    return(<div>
-              <SocialBar/>
-              <NavBar />
-              <Menu routes={this.props.props.routes}
-                    logo={this.props.props.logo}
-                    fatherC={this.props.props.fatherC}/>
-              <main>
-                <Banner bannerImg={this.props.props.bannerImg}/>
-                <ContenedorMain/>
-              </main>
-              <Footer />
+    return(<Router>
+            <div>
+                <SocialBar/>
+                <NavBar />
+                <Menu routes={this.props.props.routes}
+                      logo={this.props.props.logo}
+                      fatherC={this.props.props.fatherC}/>
+                <main>
+                  <Route path="/ecotienda" exact render={ (props) => <Home bannerImg={this.props.props.bannerImg}
+                                                                               productController={this.productController}
+                                                                               defaultImg={this.props.props.imgDefaultProduct}/> }
+                  />
+                <Route path="/ecotienda/:id" component={Match} />
+                </main>
+                <Footer />
 
-           </div>)
+            </div>
+          </Router>)
   }
 }
 

@@ -76,11 +76,12 @@
 
       var props = {logo: "{!! asset('assets/img/ambientesTienda.png') !!}",
                    routes: {shop: "{!! route('shop') !!}",
-                            busqueda: "{!! route('shop.busqueda') !!}"},
+                            busqueda: "#"},
                    fatherC: {!! $fatherC !!},
 									 bannerImg : "{!! asset('assets/img/tienda.jpg') !!}",
 									 token : "{!! csrf_token() !!}",
-									 routes : {getProducts : "{!! route('products.getproducts') !!}"}
+									 routes : {getProducts : "{!! route('products.getproducts') !!}"},
+									 imgDefaultProduct : "{!! asset('assets/img/products/default.jpg')!!}",
 									 }
 
       $(document).ready(function(){

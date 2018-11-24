@@ -34,8 +34,8 @@ class Product
   */
   getProducts( callBack ){
     fetch(this.routes.getProducts, this.opts)
-      .then( res => { res.json()} )
-      .then( data => { callBack(data)} )
+      .then( res => { return res.json()} )
+      .then( data => { callBack(data) } )
       .catch( e => console.error(`[request] ${this.routes.getProducts}`, e) )
   }
 

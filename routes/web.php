@@ -45,13 +45,22 @@ Route::group( ["prefix" => "products"], function(){
 });
 
 //___________________________Ecommerce_public__________________________________
+  //Mapea todas las rutas para /dashboard, el rooteo lo maneja react-router
+  Route::get('/ecotienda/{path?}', [
+      'uses' => 'ShopController@index',
+      'as' => 'shop',
+      'where' => ['path' => '.*']
+  ]);
+
+  /*
   Route::group(["prefix"=>"ecotienda"],function(){
     Route::get('/',                       'ShopController@index')->name('shop');//Retorna a la página principal
     Route::get('search',                  'EcommerceController@search')->name('shop.busqueda');//Maneja la busqueda y retorna a la vista del resultado
-  /*   Route::get('show.product/{id}',       'EcommerceController@details')->name('shop.showproduct');
+    Route::get('show.product/{id}',       'EcommerceController@details')->name('shop.showproduct');
     Route::get('accesorio/{id}',          'EcommerceController@detailsAccessory')->name('shop.showAccessory');
     Route::get('allproducts/{id}',        'EcommerceController@allProducts')->name('shop.allproducts');
     Route::get('allproducts_brand/{id}',  'EcommerceController@brands')->name('shop.allproducts_brand');
     Route::get('fathercategory/{id}',     'EcommerceController@father_categories')->name('shop.fathercategory');
-    Route::post('email',                  'EcommerceController@mails')->name('shop.email'); */
+    Route::post('email',                  'EcommerceController@mails')->name('shop.email');
   });
+  */
