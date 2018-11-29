@@ -79,7 +79,7 @@ class Main extends React.Component{
                     </div>
                   </nav>
 
-                  <div>
+                  <div> 
                     <Route path="/dashboard/ecommerce" render={ (props) => <Ecommerce {...props} routes={this.props.routes}
                                                                                                  token={this.props.token}
                                                                                                  defaultImg={this.props.defaultImg}

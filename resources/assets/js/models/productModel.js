@@ -52,7 +52,7 @@ class Product
     fetch(this.routes.getProduct, opts)
       .then( res => res.json() )
       .then( data => callback(data) )
-      .catch( e => console.error(`[request] error al obtener el producto`) );
+      .catch( e => console.error(`[request] error al obtener el producto`,e) );
   }
 
 

@@ -2,6 +2,7 @@ import React     from 'react'
 import ReactDOM  from 'react-dom'
 import ProductController from '../../controllers/productController.js'
 import { BrowserRouter as Router, Route, Link } from "react-router-dom";
+import Product from './product.js'
 
 /**
 *Renderiza la barra de redes sociales
@@ -64,6 +65,9 @@ class Menu extends React.Component{
     		        </li>
     		        <li>
                   <Link to="/ecotienda"><span className="tittles rem1-5 tittle">Ambientes sostenibles</span></Link>
+    		        </li>
+                <li>
+                  <Link to="/ecotienda/producto/6"><span className="tittles rem1-5 tittle">Producto 6</span></Link>
     		        </li>
 
                 <li className="search">
@@ -312,20 +316,6 @@ class Home extends React.Component{
   }
 }
 
-/**
-*
-*/
-class Match extends React.Component{
-  constructor(props){
-    super(props)
-  }
-
-  render(){
-    return(<div>
-            <h3>ID: {this.props.match.params.id}</h3>
-           </div>)
-  }
-}
 
 
 /**
@@ -336,8 +326,17 @@ class Index extends React.Component{
   constructor(props){
     super(props)
 
-    var routesproducts = {getProducts: this.props.props.routes.getProducts}
+    this.state = {product:null}
+
+    var routesproducts = {getProducts: this.props.props.routes.getProducts,
+                          getProduct: this.props.props.routes.getProduct}
     this.productController = new ProductController(this.props.props.token, routesproducts)
+
+    this.getProduct = this.getProduct.bind(this)
+  }
+
+  getProduct(id){
+    this.productController.getProduct(id, data => {this.setState({product:data.product})})
   }
 
   render(){
@@ -350,10 +349,14 @@ class Index extends React.Component{
                       fatherC={this.props.props.fatherC}/>
                 <main>
                   <Route path="/ecotienda" exact render={ (props) => <Home bannerImg={this.props.props.bannerImg}
-                                                                               productController={this.productController}
-                                                                               defaultImg={this.props.props.imgDefaultProduct}/> }
+                                                                           productController={this.productController}
+                                                                           defaultImg={this.props.props.imgDefaultProduct}/> }
                   />
-                <Route path="/ecotienda/:id" component={Match} />
+
+                <Route path="/ecotienda/producto/:id" render={ (props) => <Product match={props.match}
+                                                                                   product={this.state.product}
+                                                                                   getProduct={this.getProduct}/> }/>
+
                 </main>
                 <Footer />
 

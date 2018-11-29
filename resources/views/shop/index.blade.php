@@ -80,7 +80,8 @@
                    fatherC: {!! $fatherC !!},
 									 bannerImg : "{!! asset('assets/img/tienda.jpg') !!}",
 									 token : "{!! csrf_token() !!}",
-									 routes : {getProducts : "{!! route('products.getproducts') !!}"},
+									 routes : {getProducts : "{!! route('products.getproducts') !!}",
+								             getProduct: "{!! route('products.getProduct') !!}"},
 									 imgDefaultProduct : "{!! asset('assets/img/products/default.jpg')!!}",
 									 }
 

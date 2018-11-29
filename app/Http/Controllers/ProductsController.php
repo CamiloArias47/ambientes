@@ -34,7 +34,7 @@ class ProductsController extends Controller
                                                 'brands'           => json_encode($brands),
                                                 'tags'             => json_encode($tags),
                                                 'products'         => json_encode($products),
-                                                'prev'             => $this->thereIsMorePrevNext($lastP[0]["created_at"],"<"),
+                                                'prev'             => false /*$this->thereIsMorePrevNext($lastP[0]["created_at"],"<")*/,
                                                 'maxUpload'        => 20,
                                                 ]);
     }
@@ -587,8 +587,7 @@ class ProductsController extends Controller
       $products = $this->getLastProducts();
       $lastP    = end($products);
 
-      return response()->json(["products" => $products,
-                               "prev"     => $this->thereIsMorePrevNext($lastP[0]["created_at"],"<")]);
+      return response()->json(["products" => $products]);
   }
 
   public function responseFatherCategories(Request $request)

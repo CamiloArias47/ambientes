@@ -55,7 +55,13 @@ class Ecommerce extends React.Component
                   gifFilter          : false, //cuando es true muestra un gif para el filtrador por nombre
                   newTags            : [], //tags nuevos a crear
                   fatherCategories   : [], //categorias padre
-                  productDetail      : this.props.products[0], //producto que e muestra en el modal de detalles
+                  productDetail      : {name:"",
+                                        shop_subcategory: {shop_category : {shop_fathercategory:{name:""}}},
+                                        shop_category:"",
+                                        shop_images: [],
+                                        shop_tags:[],
+                                        shop_brand:{name:""}
+                                       }, //producto que e muestra en el modal de detalles
                  }
 
     this.fatherCategoryController = new FatherCategoryController(this.props.token, routesFatherCat); //modelo categorias padres
@@ -497,7 +503,8 @@ class Ecommerce extends React.Component
                          onChipDelete={this.onTagDelete}
                          />
 
-                       <ModalViewProduct product={this.state.productDetail}/>
+                       {console.log(`[debug] props modal view: ${this.state.productDetail}`, this.state.productDetail)}
+            <ModalViewProduct product={this.state.productDetail}/>
 
   			   </div>)
 	}
