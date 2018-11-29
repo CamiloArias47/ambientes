@@ -413,11 +413,14 @@ class ProductsController extends Controller
         $product->showproduct         = "no";
 
         if( $product->save() ){
-            if( count($request->tagsCrearProducto) > 0 ){ //relacionamos los tags que selecciono
-                foreach ($request->tagsCrearProducto as $tag) {
-                    $product->shop_tags()->attach($tag); //creamos el registro en la table pivot
+            if($request->tagsCrearProducto){
+                if( count($request->tagsCrearProducto) > 0 ){ //relacionamos los tags que selecciono
+                    foreach ($request->tagsCrearProducto as $tag) {
+                        $product->shop_tags()->attach($tag); //creamos el registro en la table pivot
+                    }
                 }
             }
+                
 
             if( $tags !== null ){  //adjuntamos los tags que creeo
                 foreach ($tags as $newTag) {
