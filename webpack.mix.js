@@ -11,4 +11,4 @@ let mix = require('laravel-mix');
  |
  */
 
-mix.react('resources/assets/js/components/shop/index.js', 'public/assets/js/components/shop/compiled.min.js');
+mix.react('resources/assets/js/components/shop/containers/index.js', 'public/assets/js/components/shop/compiled.min.js');
