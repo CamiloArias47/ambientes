@@ -2,6 +2,8 @@
 <html>
   <head>
     <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
     <link type="text/css" rel="stylesheet" href="{{asset('assets/css/dashboard/style.css')}}"/>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link type="text/css" rel="stylesheet" href="{{asset('assets/plugins/materialize_1/css/materialize.css')}}"  media="screen,projection"/>
