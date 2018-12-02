@@ -26,7 +26,8 @@ Route::post('logout', 'Auth\LoginController@logout')->name('logout');
 Route::get('/dashboard/{path?}', [
     'uses' => 'ProductsController@index',
     'as' => 'dashboard',
-    'where' => ['path' => '.*']
+    'where' => ['path' => '.*'],
+    'middleware' => 'auth'
 ]);
 
 Route::group( ["prefix" => "products"], function(){
