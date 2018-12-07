@@ -6,6 +6,7 @@ import Footer from './footer'
 import Banner from './banner'
 import Menu from './menu'
 import ErrorBoundary from './ErrorBounday'
+import Carousel from './carousel'
 
 export {
     Loader,
@@ -15,5 +16,6 @@ export {
     Footer,
     Banner,
     Menu,
-    ErrorBoundary
+    ErrorBoundary,
+    Carousel
 }

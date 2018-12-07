@@ -31,7 +31,6 @@ class Menu extends React.Component{
     }
   
     render(){
-      console.log(`[debug] fatherC: ${this.props.fatherC}`,this.props.fatherC);
       return(<ul id="slide-out" className="sidenav sidenav-fixed">
                         <li id="logoMain">
                           <div className="user-view">
@@ -42,9 +41,6 @@ class Menu extends React.Component{
                       </li>
                       <li>
                         <Link to="/ecotienda"><span className="tittles rem1-5 tittle">Ambientes sostenibles</span></Link>
-                      </li>
-                      <li>
-                        <Link to="/ecotienda/producto/8">ir</Link>
                       </li>
                 
                   <li className="search">
@@ -57,15 +53,10 @@ class Menu extends React.Component{
   
                       </form>
                   </li>
+
+                  {this.setList()}
   
-                  <ul className="container_menu">
-                              <li className="no-padding">
-                                 <ul className="collapsible " data-collapsible="expandable">
-                                         {this.setList()}
-                                  </ul>
-                              </li>
-                  </ul>
-  
+                  
              </ul>)
     }
 }
@@ -86,9 +77,9 @@ class LiFatherC extends React.Component{
     let list = []
     this.props.father.shop_categories.forEach( category => {
       list.push(<li key={category.id}>
-                  <a href="#" className="collapsible-header waves-effect waves-orange">
-                    {category.name}
-                  </a>
+                  <Link to={"/ecotienda/categoria/"+this.props.father.id+"/subcategoria/"+category.id} className="collapsible-header waves-effect waves-green">
+                      {category.name}
+                  </Link>
                 </li>)
     })
     this.setState({list:list})
@@ -98,6 +89,19 @@ class LiFatherC extends React.Component{
   }
 
   render(){
+    return(<li className="no-padding">
+            <ul className="collapsible collapsible-accordion">
+              <li>
+                <a className="collapsible-header">{this.props.father.name}<i className="material-icons">arrow_drop_down</i></a>
+                <div className="collapsible-body">
+                  <ul>
+                    {this.state.list}
+                  </ul>
+                </div>
+              </li>
+            </ul>
+          </li>)
+
     return(<li className="bold"><a className="collapsible-header waves-effect waves-orange list"><b className="list">{this.props.father.name}</b></a>
               <div className="collapsible-body">
                   <ul className="collapsible " data-collapsible="expandable">

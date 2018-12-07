@@ -81,29 +81,21 @@
 									 bannerImg : "{!! asset('assets/img/tienda.jpg') !!}",
 									 token : "{!! csrf_token() !!}",
 									 routes : {getProducts : "{!! route('products.getproducts') !!}",
-								             getProduct: "{!! route('products.getProduct') !!}"},
+                             getProduct: "{!! route('products.getProduct') !!}",
+                             filter : "{!! route('products.filter') !!}"},
 									 imgDefaultProduct : "{!! asset('assets/img/products/default.jpg')!!}",
 									 }
 
       $(document).ready(function(){
-			//:::::::::::::::BARRA DE NAVEGACION::::::::::::
+        //::::::::::::::::::::::::::::::::::::::::::::::
+        $("#search").on("focusin",function(){
+          $("#search").parent().addClass("focused")
+        })
 
+        $("#search").on("focusout",function(){
+          $("#search").parent().removeClass("focused")
+        })
 
-			//::::::::::::::::::::::::::::::::::::::::::::::
-
-			$("#search").on("focusin",function(){
-				$("#search").parent().addClass("focused")
-			})
-
-			$("#search").on("focusout",function(){
-				$("#search").parent().removeClass("focused")
-			})
-
-			$('.carousel').carousel({dist: 0, padding:30});
-
-			setInterval(function(){ $('.carousel').carousel('next'); }, 5000);
-			  $('.slider').slider();
-			  $('.parallax').parallax();
 			})
 
 			//scrollSpy

@@ -11,23 +11,38 @@
 */
 
 
+
+import React from 'react'
+import {CardProduct} from '../components'
+
 /**
 * Contenedor principal de los productos de una categoria
 * @prop {ProductController} productController //instancia de productController para realizar peticiones a la API
 * @prop {string} defaultImg // imagen default de productoss
+* @prop {object} match 
 */
-class ContenedorMain extends React.Component{
+class ViewCategory extends React.Component{
 
     constructor(props){
       super(props)
       this.state = {products: []}
+
+      this.productController = this.props.productController
     }
   
     componentDidMount(){
-      this.props.productController.getProducts( data => {
-        console.log(`[debug] productos`, data);
-        this.setState({products:data.products})
-      })
+      let {match} = this.props
+      this.getProducts(match.params.father, match.params.cat)
+    }
+
+    componentWillReceiveProps(nextProps){
+      this.getProducts(nextProps.match.params.father, nextProps.match.params.cat )
+    }
+
+    getProducts(father, category){
+      this.productController.filter(father, category, "", "")
+        .then( data => { this.setState({products:data.father})} )
+        .catch(e => console.error(`[debug] error en petición filtro:${e}`,e) )
     }
   
     renderCardProduct(){
@@ -52,13 +67,12 @@ class ContenedorMain extends React.Component{
     }
   
     render(){
+      let products = this.renderCardProduct()
       return(<div id="contenedorProductos">
-              <center><h1>Últimos productos</h1></center>
-              <div>
-                <div className="row">
-                  {this.renderCardProduct() }
-                </div>
-              </div>
+              <center><h1>Categoria, subcategoria</h1></center>
+                {products}
              </div>)
     }
   }
+
+  export default ViewCategory

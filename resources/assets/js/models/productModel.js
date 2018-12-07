@@ -165,6 +165,28 @@ class Product
    }
 
 
+   /**
+    * Realiza peticiones post, responde con productos de una categoria pedida
+    * @param {int} father //id de la categoria padre
+    * @param {int} catego //id de la categoria
+    * @param {int} subcat //id de la subcategoria
+    * @param {int} name //nombre a buscar
+    */
+   filter(father, catego, subcat, name){
+     var opts = this.opts
+     opts.body = JSON.stringify({father:father,catego:catego,subcat:subcat,name:name})
+     return new Promise( (resolve,reject) => {
+       fetch(this.routes.filter, this.opts)
+        .then( response => response.json() )
+        .then( data => {
+          if(data.father)return resolve(data)
+          return reject( data )
+        } )
+        .catch( e => reject(e))
+     }) 
+     //return fetch(this.routes.filter, this.opts)         
+   }
+
 }
 
 

@@ -3,6 +3,7 @@ import ReactDOM  from 'react-dom'
 import ProductController from '../../../controllers/productController.js'
 import { BrowserRouter as Router, Route } from "react-router-dom";
 import Product from './product.js'
+import ViewCategory from './category'
 import {CardProduct,
         SocialBar,
         NavBar,
@@ -95,10 +96,22 @@ class Index extends React.Component{
     this.state = {product:null}
 
     var routesproducts = {getProducts: this.props.props.routes.getProducts,
-                          getProduct: this.props.props.routes.getProduct}
+                          getProduct: this.props.props.routes.getProduct,
+                          filter: this.props.props.routes.filter}
 
     this.productController = new ProductController(this.props.props.token, routesproducts)
 
+  }
+
+  componentDidMount(){
+    var elems = document.querySelectorAll('.sidenav');
+    var instances = M.Sidenav.init(elems, {preventScrolling:false,
+                                           onOpenEnd: ()=>{
+                                             //var overlay = document.querySelectorAll('.sidenav-overlay')
+                                             //overlay[0].style.display = "none";
+                                             //console.log(`Overlay : ${overlay}`, overlay[0]);
+                                           } });
+    var instance = M.Sidenav.getInstance(elems[0]);
   }
 
   render(){
@@ -115,11 +128,15 @@ class Index extends React.Component{
                                                                            defaultImg={this.props.props.imgDefaultProduct}/> }
                   />
 
-                <Route path="/ecotienda/producto/:id" render={ (props) => <ErrorBoundary>
-                                                                            <Product match={props.match}
-                                                                                    productController={this.productController}/>
-                                                                          </ErrorBoundary> }/>
+                  <Route path="/ecotienda/producto/:id" render={ (props) => <ErrorBoundary>
+                                                                              <Product match={props.match}
+                                                                                      productController={this.productController}
+                                                                                      defaultImg={this.props.props.imgDefaultProduct}/>
+                                                                            </ErrorBoundary> }/>
 
+                  <Route path="/ecotienda/categoria/:father/subcategoria/:cat" render={ props => <ViewCategory match={props.match}
+                                                                                                               productController={this.productController}
+                                                                                                               defaultImg={this.props.props.imgDefaultProduct}/>}/>
                 </main>
                 <Footer />
 

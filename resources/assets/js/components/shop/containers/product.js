@@ -13,12 +13,13 @@
 
 
 import React     from 'react'
-import {Loader} from '../components'
+import {Loader, Carousel} from '../components'
 
 /**
 *Renderiza la vista de detalles de un producto
 *@prop {object} match 
 *@prop {ProductController} productController
+*@prop {string} defaultImg //ruta de imagen producto por defecto
 */
 class Product extends React.Component{
 
@@ -30,20 +31,25 @@ class Product extends React.Component{
   }
 
   componentDidMount(){
-    console.log(`[debug] product.js componentDidMount match: ${this.props.match}`,this.props.match);
-    console.log(`[debug] product.js componentDidMount productController: ${this.props.productController}`,this.props.productController)
     this.getProduct(this.state.productId);
   }
 
   componentWillReceiveProps(nextProps){
-    console.log(`[debug] product.js nextProps: ${nextProps}`,nextProps)
     this.setState({productId:nextProps.match.params.id})
     this.getProduct(nextProps.match.params.id)
   }
 
   getProduct(id){
-    console.log(`[debug] getProduct() id: ${id}`)
     this.props.productController.getProduct(id, data=>{this.setState({product:data.product})})
+  }
+
+  renderCarousel(){
+    let imgs = []
+    this.state.product.shop_images.map(img => {
+      imgs.push(<a className="carousel-item" href={"#"+img.id} key={"imgCarouse"+img.id}><img src={img.route}/></a>)
+    })
+
+    return <div className="carousel">{imgs}</div>
   }
 
   /**
@@ -51,9 +57,34 @@ class Product extends React.Component{
   */
   render(){
     if(this.state.product){
-      return(<div>
-              <h3>ID: {this.state.product.name}</h3>
-             </div>)
+      let {product} = this.state
+
+      return(<section>
+              <div className="section white">
+                <div className="row">
+                  <div className="col m6 s12">
+                    <Carousel images={product.shop_images} 
+                              defaultImg={this.props.defaultImg}/>
+                  </div>
+                  <div className="col m6 s12">
+                    <hr/>
+                    <h1>{product.name}</h1>
+                    <hr/>
+                    <div id="ranking">
+                      <a href="#" className="fa-star fa"></a>
+                      <a href="#" className="fa-star fa"></a>
+                      <a href="#" className="fa-star fa"></a>
+                      <a href="#" className="fa-star fa"></a>
+                      <a href="#" className="fa-star fa"></a>
+                    </div>
+                    <span>De <a href="#">{product.shop_brand.name}</a>  </span>
+                    <div>
+                      <p dangerouslySetInnerHTML={{__html: product.description}}></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+             </section>)
     }
 
     return  <Loader />

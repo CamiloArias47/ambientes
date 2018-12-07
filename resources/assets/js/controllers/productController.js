@@ -83,6 +83,10 @@ class ProductController
     this.product.getProduct(id, data => callback(data));
   }
 
+  filter(father, catego, subcat, name){
+    return this.product.filter(father, catego, subcat, name)
+  }
+
 }
 
 export default ProductController
