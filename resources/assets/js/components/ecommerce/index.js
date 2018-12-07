@@ -1,13 +1,12 @@
 import React            from 'react'
-import ReactDOM         from 'react-dom'
 import Cropper          from 'cropperjs'
-import { BrowserRouter as Router, Route, Link } from "react-router-dom";
-import FatherCategoryController   from '../../controllers/fatherCategoryController.js'
-import CategoryController         from '../../controllers/categoryController.js'
-import SubCategoryController      from '../../controllers/subCategoryController.js'
-import TagController              from '../../controllers/tagController.js'
-import BrandController            from '../../controllers/marcaController.js'
-import ProductController          from '../../controllers/productController.js'
+
+import {Category,
+				FatherCategory,
+				Brand,
+				Product,
+				SubCategory,
+				Tag} from '../../models'
 
 var Helpers = require('../helpers.js'); //incluir el archivo que contine funciones peara diferentes fines
 var helper  = new Helpers;
@@ -64,12 +63,12 @@ class Ecommerce extends React.Component
                                        }, //producto que e muestra en el modal de detalles
                  }
 
-    this.fatherCategoryController = new FatherCategoryController(this.props.token, routesFatherCat); //modelo categorias padres
-    this.categoryController = new CategoryController(this.props.token, routesCategory);
-    this.subCategoryController = new SubCategoryController(this.props.token, routesSubCat);
-    this.tagController = new TagController(this.props.token, routesTags);
-    this.brandController = new BrandController(this.props.token, routesBrands);
-    this.productController = new ProductController(this.props.token, routeProducts);
+    this.fatherModel = new FatherCategory(this.props.token, routesFatherCat); //modelo categorias padres
+    this.categoryModel = new Category(this.props.token, routesCategory);
+    this.subCategory = new SubCategory(this.props.token, routesSubCat);
+    this.tagModel = new Tag(this.props.token, routesTags);
+    this.brandModel = new Brand(this.props.token, routesBrands);
+    this.productModel = new Product(this.props.token, routeProducts);
 
 		this.submitForm      = this.submitForm.bind(this);
 		this.finishCreate    = this.finishCreate.bind(this);
@@ -91,7 +90,7 @@ class Ecommerce extends React.Component
 		var formData = new FormData(document.getElementById('formCreateProduct'))
     formData.append('agregarTagsCrearProducto',JSON.stringify(this.state.newTags))
 
-    this.productController.saveProduct(formData, response =>{
+    this.productModel.saveProduct(formData, response =>{
       if(response.saved){
 
         helper.showMessage("success","Datos almacenados", "Debes agregar fotos a el producto")
@@ -113,7 +112,7 @@ class Ecommerce extends React.Component
 		var formData = new FormData(document.getElementById('formEditProduct'))
     formData.append('agregarTagsCrearProducto',JSON.stringify(this.state.newTags))
 
-    this.productController.edit(formData, response => {
+    this.productModel.edit(formData, response => {
         if(response.saved){
           helper.showMessage("success","Datos editados", "Editar fotos")
           this.setState({pageFormEdit:'second',
@@ -159,11 +158,11 @@ class Ecommerce extends React.Component
                          token={this.props.token}
                          onChipAdd={this.onTagAdd}
                          onChipDelete={this.onTagDelete}
-                         categoryController={this.categoryController}
-                         subCategoryController={this.subCategoryController}
-                         tagController={this.tagController}
-                         brandController={this.brandController}
-                         productController={this.productController}/>
+                         categoryModel={this.categoryModel}
+                         subCategory={this.subCategory}
+                         tagModel={this.tagModel}
+                         brandModel={this.brandModel}
+                         productModel={this.productModel}/>
 		}
 		else if(this.state.pageForm == "second"){
 			return <FormImages defaultImg={this.props.defaultImg}
@@ -173,7 +172,7 @@ class Ecommerce extends React.Component
                          productCreated={this.state.productCreated}
                          token={this.props.token}
                          finishCreate={this.finishCreate}
-                         productController={this.productController}/>
+                         productModel={this.productModel}/>
 		}
 	}
 
@@ -198,7 +197,7 @@ class Ecommerce extends React.Component
 	//maneja el evento onClick del boton que finaliza la carga de fotos
 	finishCreate(ev){
 		ev.preventDefault()
-    this.productController.getProducts( data => {
+    this.productModel.getProducts( data => {
       this.setState({pageForm:'first',
                     products:data.products,
                     prev:data.prev})
@@ -210,7 +209,7 @@ class Ecommerce extends React.Component
 	//hace un llamado ajax para refrescar la información del producto que se estaba editando en el modal
 	finishUpdate(){
 		var id = this.state.pageFormEdit == "first" ? this.state.productEdit.id : this.state.productEditing
-    this.productController.getProduct(id, response => {
+    this.productModel.getProduct(id, response => {
       if(response.exist){
         var newProd = [];
         this.state.products.forEach( prod => {
@@ -253,7 +252,7 @@ class Ecommerce extends React.Component
     e.preventDefault()
     var id = e.target.getAttribute("data-id")
     console.log(`[debug] modal data-id: ${id}`);
-    this.productController.getProduct(id, product => {
+    this.productModel.getProduct(id, product => {
       console.log(`[debug] este es producto: ${product}`, product);
       this.setState({productDetail:product.product})
     });
@@ -291,7 +290,7 @@ class Ecommerce extends React.Component
 	//realiza una peticion ajax para cargar las categorias de una categoria padre
 	ajaxGetCategories(id){
 
-    this.categoryController.setCategories(id, data=>{
+    this.categoryModel.setCategories(id, data=>{
       this.setState({optCategories:data,
                      optSubCatego:[]})
     })
@@ -300,7 +299,7 @@ class Ecommerce extends React.Component
 
 	//realiza una peticion ajax para cargar las sub-categorias de una categoria
 	ajaxGetSubCategories(id){
-    this.subCategoryController.getSubcategories(id, data=>{
+    this.subCategory.getSubcategories(id, data=>{
       this.setState({optSubCatego:data})
     })
 	}
@@ -392,7 +391,7 @@ class Ecommerce extends React.Component
 
   componentDidMount(){
 
-    this.fatherCategoryController.setfatherCategoriesOptions( data => {
+    this.fatherModel.setfatherCategoriesOptions( data => {
       this.setState({fatherCategories:data})
     })
 
@@ -494,11 +493,11 @@ class Ecommerce extends React.Component
                          finishUpdate={this.finishUpdate}
                          routeDeleteImg={this.props.routes.deleteImg}
                          token={this.props.token}
-                         tagController={this.tagController}
-                         subCategoryController={this.subCategoryController}
-                         categoryController={this.categoryController}
-                         brandController={this.brandController}
-                         productController={this.productController}
+                         tagModel={this.tagModel}
+                         subCategory={this.subCategory}
+                         categoryModel={this.categoryModel}
+                         brandModel={this.brandModel}
+                         productModel={this.productModel}
                          onChipAdd={this.onTagAdd}
                          onChipDelete={this.onTagDelete}
                          />
@@ -634,10 +633,10 @@ class Produt extends React.Component
 *       @prop {string}  token                   ->           token de la app Laravel
 *       @prop {function} onChipAdd              -> callback cuando se agrega un tag al input de nuevos tags
 *       @prop {function} onChipDelete           -> callback cuando se elimina un tag del input de nuevos tags
-*       @prop {instance} categoryController     -> instancia del controlador de categorias
-*       @prop {instance} tagController          -> instancia de el controlador de tags
-*       @prop {instance} brandController        -> instancia del controlador de marcas
-*       @prop {instance} productController      -> instancia del controlador de productos
+*       @prop {instance} categoryModel     -> instancia del controlador de categorias
+*       @prop {instance} tagModel          -> instancia de el controlador de tags
+*       @prop {instance} brandModel        -> instancia del controlador de marcas
+*       @prop {instance} productModel      -> instancia del controlador de productos
 */
 class FormCreate extends React.Component
 {
@@ -645,7 +644,7 @@ class FormCreate extends React.Component
 		super(props)
 		this.state = {'type'                 : this.props.productEdit != null ? this.props.productEdit.type : "",
 		              'valueFathercate'      : this.props.productEdit != null && this.props.editOrCreate == "edit" ? this.props.productEdit.shop_subcategory.shop_category.shop_fathercategory.id : "",  //el valor del value del delect de father category
-		              'fatherCategory'       : "",  //el id de la categoria padre seleccionada, cuando cambie, genera un llamado ajax para contruir sus categorias
+		              'fatherModel'       : "",  //el id de la categoria padre seleccionada, cuando cambie, genera un llamado ajax para contruir sus categorias
 		              'otherFather'          : false, //si es true renderiza un input para poner una categoria padre
 		              'categories'           : [],
 		              'valCategory'          : "", //el valor selecionado para el select categoria
@@ -714,7 +713,7 @@ class FormCreate extends React.Component
   *Pide los tags y los establece en el state
   */
   getTags(){
-    this.props.tagController.getTags( data=>{
+    this.props.tagModel.getTags( data=>{
       this.setState({allTags:data});
     })
   }
@@ -786,7 +785,7 @@ class FormCreate extends React.Component
   */
 	ajaxGetCategories(id){
     var opts = [];
-    this.props.categoryController.setCategories(id, data => {
+    this.props.categoryModel.setCategories(id, data => {
       data.forEach( cate => {
         opts.push(<option value={cate.id} key={"categoryOpt-"+cate.id}>{cate.name}</option>)
       })
@@ -813,7 +812,7 @@ class FormCreate extends React.Component
 	//hace un llamado ajax, para cargar las subcategorias
 	ajaxGetSubcategories(id){
     console.log(`[debug] subcategorias en FormCreate`);
-    this.props.subCategoryController.getSubcategories(id, data=>{
+    this.props.subCategory.getSubcategories(id, data=>{
       var opts = []
       data.forEach( sub =>{
         opts.push(<option value={sub.id} key={"optSubCat-"+sub.id}>{sub.name}</option>)
@@ -992,7 +991,7 @@ class FormCreate extends React.Component
 	ajaxQuitTag(ev){
 		ev.preventDefault()
 		var tag = ev.target.getAttribute('data-id')
-    this.props.productController.dellTag(this.state.productEditId,tag, (response) =>{
+    this.props.productModel.dellTag(this.state.productEditId,tag, (response) =>{
       if(response.detach){
         this.setState({tags:response.tags})
       }
@@ -1064,14 +1063,14 @@ class FormCreate extends React.Component
     this.getBrands() //cargar las marcas
 
     //obtener los tags para renderizarlos en el select de tags
-    this.props.tagController.getTags( data=>{
+    this.props.tagModel.getTags( data=>{
       this.setState({allTags:data});
       setTimeout( ()=>{ //Una espera a que se rendericen los opts
         this.initSelects(); ////inicializar los selects de materialize
       },500)
     })
 
-    this.props.brandController.getBrands( data=>{
+    this.props.brandModel.getBrands( data=>{
       this.setState({brands:data})
       setTimeout( ()=>{ //Una espera a que se rendericen los opts
         this.initSelects(); //inicializar los selects de materialize
@@ -1549,7 +1548,7 @@ class FormImages extends React.Component
 						                                            update={false}
                                                         token={this.props.token}
 						                                            imgId={false}
-                                                        productController={this.props.productController}/>)}
+                                                        productModel={this.props.productModel}/>)}
 
 					<div className="col-md-12">
 						<button className="btn btn-default pull-right" onClick={this.appendInputPic}>Agregar foto</button>
@@ -1637,7 +1636,7 @@ class RowInputPic extends React.Component
   			update             = this.props.update,
   			imgId              = this.props.imgId,
         token              = this.props.token,
-        productController  = this.props.productController,
+        productModel  = this.props.productModel,
   		  uploadedImageURL
 
 
@@ -1689,7 +1688,7 @@ class RowInputPic extends React.Component
     				  	formData.append('img_id',imgId);
     				  }
 
-                  productController.saveImg(formData, (evt)=>{
+                  productModel.saveImg(formData, (evt)=>{
                     var percent = (evt.loaded / evt.total) * 100;
                     var width = Math.round(percent)+'%'
                     console.log(`[debug] send img: ${width}`);
@@ -1788,11 +1787,11 @@ class ModalEdit extends React.Component
                           editOrCreate="edit"
                           productEdit={this.props.productEdit}
                           token={this.props.token}
-                          tagController={this.props.tagController}
-                          subCategoryController={this.props.subCategoryController}
-                          categoryController={this.props.categoryController}
-                          brandController={this.props.brandController}
-                          productController={this.props.productController}
+                          tagModel={this.props.tagModel}
+                          subCategory={this.props.subCategory}
+                          categoryModel={this.props.categoryModel}
+                          brandModel={this.props.brandModel}
+                          productModel={this.props.productModel}
                           onChipAdd={this.props.onChipAdd}
                           onChipDelete={this.props.onChipDelete}/>
 		}
@@ -1803,7 +1802,7 @@ class ModalEdit extends React.Component
 			                       routeSubmit={this.props.routeUpImge}
                              token={this.props.token}
 			                       routeDeleteImg={this.props.routeDeleteImg}
-                             productController={this.props.productController}/>
+                             productModel={this.props.productModel}/>
 		}
 	}
 
@@ -1852,7 +1851,7 @@ class ModalEdit extends React.Component
 //       routeSubmit         -> string    Ruta para subir nuevas imagenes
 //       token               -> string    Token para realizar peticiones ajax
 //       routeDeleteImg      -> string   ruta para eliminar imagen
-//       productController   -> ProductController controlador de productos
+//       productModel   -> Product controlador de productos
 class FormEditImages extends React.Component
 {
 	constructor(props){
@@ -1922,7 +1921,7 @@ class FormEditImages extends React.Component
                                      update={true}
                                      token={this.props.token}
                                      imgId={img.id}
-                                     productController={this.props.productController}/>)
+                                     productModel={this.props.productModel}/>)
 		})
 		return render
 	}
@@ -1943,7 +1942,7 @@ class FormEditImages extends React.Component
 						                                            update={false}
                                                         token={this.props.token}
 						                                            imgId={false}
-                                                        productController={this.props.productController}/>)}
+                                                        productModel={this.props.productModel}/>)}
 
 			 		<div className="col-md-12">
 						<button className="btn btn-default pull-right" onClick={this.appendInputPic}>Agregar foto</button>

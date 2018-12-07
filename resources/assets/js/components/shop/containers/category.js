@@ -17,7 +17,7 @@ import {CardProduct} from '../components'
 
 /**
 * Contenedor principal de los productos de una categoria
-* @prop {ProductController} productController //instancia de productController para realizar peticiones a la API
+* @prop {ProductModel} productModel //instancia de productModel para realizar peticiones a la API
 * @prop {string} defaultImg // imagen default de productoss
 * @prop {object} match 
 */
@@ -27,7 +27,7 @@ class ViewCategory extends React.Component{
       super(props)
       this.state = {products: []}
 
-      this.productController = this.props.productController
+      this.productModel = this.props.productModel
     }
   
     componentDidMount(){
@@ -40,7 +40,7 @@ class ViewCategory extends React.Component{
     }
 
     getProducts(father, category){
-      this.productController.filter(father, category, "", "")
+      this.productModel.filter(father, category, "", "")
         .then( data => { this.setState({products:data.father})} )
         .catch(e => console.error(`[debug] error en petición filtro:${e}`,e) )
     }

@@ -18,7 +18,7 @@ import {Loader, Carousel} from '../components'
 /**
 *Renderiza la vista de detalles de un producto
 *@prop {object} match 
-*@prop {ProductController} productController
+*@prop {ProductModel} productModel
 *@prop {string} defaultImg //ruta de imagen producto por defecto
 */
 class Product extends React.Component{
@@ -40,7 +40,7 @@ class Product extends React.Component{
   }
 
   getProduct(id){
-    this.props.productController.getProduct(id, data=>{this.setState({product:data.product})})
+    this.props.productModel.getProduct(id, data=>{this.setState({product:data.product})})
   }
 
   renderCarousel(){

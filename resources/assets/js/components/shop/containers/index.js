@@ -1,6 +1,6 @@
 import React     from 'react'
 import ReactDOM  from 'react-dom'
-import ProductController from '../../../controllers/productController.js'
+import ProductModel from '../../../models/productModel'
 import { BrowserRouter as Router, Route } from "react-router-dom";
 import Product from './product.js'
 import ViewCategory from './category'
@@ -16,7 +16,7 @@ import {CardProduct,
 
 /**
 * Contenedor principal que contiene los productos, en la p
-* @prop {ProductController} productController //instancia de productController para realizar peticiones a la API
+* @prop {ProductModel} productModel //instancia de productModel para realizar peticiones a la API
 * @prop {string} defaultImg // imagen default de productoss
 */
 class ContenedorMain extends React.Component{
@@ -27,7 +27,7 @@ class ContenedorMain extends React.Component{
   }
 
   componentDidMount(){
-    this.props.productController.getProducts( data => {
+    this.props.productModel.getProducts( data => {
       console.log(`[debug] productos`, data);
       this.setState({products:data.products})
     })
@@ -70,14 +70,14 @@ class ContenedorMain extends React.Component{
 /**
 * Renderiza el home de la ecommer
 * @prop {string} bannerImg //ruta de la imagen principal
-* @prop {ProductController} productController //instancia de productController para realizar peticiones
+* @prop {ProductModel} productModel //instancia de productModel para realizar peticiones
 * @prop {string} defaultImg //ruta de la imagen por defecto para productos sin imagen
 */
 class Home extends React.Component{
   render(){
     return(<div>
               <Banner bannerImg={this.props.bannerImg}/>
-              <ContenedorMain productController={this.props.productController}
+              <ContenedorMain productModel={this.props.productModel}
                               defaultImg={this.props.defaultImg}/>
            </div>)
   }
@@ -99,7 +99,7 @@ class Index extends React.Component{
                           getProduct: this.props.props.routes.getProduct,
                           filter: this.props.props.routes.filter}
 
-    this.productController = new ProductController(this.props.props.token, routesproducts)
+    this.productModel = new ProductModel(this.props.props.token, routesproducts)
 
   }
 
@@ -124,18 +124,18 @@ class Index extends React.Component{
                       fatherC={this.props.props.fatherC}/>
                 <main>
                   <Route path="/ecotienda" exact render={ (props) => <Home bannerImg={this.props.props.bannerImg}
-                                                                           productController={this.productController}
+                                                                           productModel={this.productModel}
                                                                            defaultImg={this.props.props.imgDefaultProduct}/> }
                   />
 
                   <Route path="/ecotienda/producto/:id" render={ (props) => <ErrorBoundary>
                                                                               <Product match={props.match}
-                                                                                      productController={this.productController}
+                                                                                      productModel={this.productModel}
                                                                                       defaultImg={this.props.props.imgDefaultProduct}/>
                                                                             </ErrorBoundary> }/>
 
                   <Route path="/ecotienda/categoria/:father/subcategoria/:cat" render={ props => <ViewCategory match={props.match}
-                                                                                                               productController={this.productController}
+                                                                                                               productModel={this.productModel}
                                                                                                                defaultImg={this.props.props.imgDefaultProduct}/>}/>
                 </main>
                 <Footer />
