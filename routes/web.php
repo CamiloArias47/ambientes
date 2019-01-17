@@ -43,10 +43,11 @@ Route::group( ["prefix" => "products"], function(){
   Route::post('edit', 'ProductsController@editProduct')->name('products.edit');
   Route::post('getProduct', 'ProductsController@responseGetProduct')->name('products.getProduct');
   Route::post('filter', 'ProductsController@filterProducts')->name('products.filter');
+  Route::post('editImg', 'ProductsController@ajaxEditImg')->name('product.editimg');
 });
 
 //___________________________Ecommerce_public__________________________________
-  //Mapea todas las rutas para /dashboard, el rooteo lo maneja react-router
+  //Mapea todas las rutas para /ecotienda, el rooteo lo maneja react-router
   Route::get('/ecotienda/{path?}', [
       'uses' => 'ShopController@index',
       'as' => 'shop',

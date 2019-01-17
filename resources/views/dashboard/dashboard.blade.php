@@ -95,7 +95,8 @@
                     deleteTag : "{!! route('products.deleteTag')!!}" ,
                     editProduct : "{!! route('products.edit') !!}",
                     getProduct : "{!! route('products.getProduct') !!}",
-                    filterProducts : "{!! route('products.filter')!!}"};
+                    filterProducts : "{!! route('products.filter')!!}",
+                    editImg : "{!! route('product.editimg') !!}"};
 
           //estas variables es mejor setearlas cuando se cargue el componente con un ajax o un fetch
           var fatherCategories = {!!$fatherCategories!!},

@@ -1,26 +1,27 @@
-import React            from 'react'
-import Cropper          from 'cropperjs'
+import React  from 'react'
+//import Cropper from 'cropperjs'
+
+import Cropper from 'react-cropper';
+import 'cropperjs/dist/cropper.css';
 
 import {Category,
 				FatherCategory,
 				Brand,
 				Product,
 				SubCategory,
-				Tag} from '../../models'
+				Tag as TagModel} from '../../models'
 
 var Helpers = require('../helpers.js'); //incluir el archivo que contine funciones peara diferentes fines
 var helper  = new Helpers;
 
-const chosenSelectStyle = {width:"350px"},
-      maxImage          = {maxWidth:"100%"},
+const maxImage          = {maxWidth:"100%"},
       startProgressBar  = {width: "0%"},
-      maxHeight60px     = {height:"60px"},
-      padding0          = {padding: '0px'},
       closeX            = {cursor: "pointer",
                            float: "right",
                            fontSize: "16px",
                            lineHeight: "32px",
-                           paddingLeft: "8px"};
+													 paddingLeft: "8px"},
+		  cropperPreview  =  {width: '100%', float: 'left', height: 300, overflow:'hidden'};
 
 class Ecommerce extends React.Component
 {
@@ -38,7 +39,8 @@ class Ecommerce extends React.Component
                              getProduct:this.props.routes.getProduct,
                              deleteTag:this.props.routes.deleteTag,
                              editProduct: this.props.routes.editProduct,
-                             filterProducts: this.props.routes.filterProducts}
+														 filterProducts: this.props.routes.filterProducts,
+														 editImg : this.props.routes.editImg}
 
 		this.state = {pageForm           :'first', //renderiza un formulario, "first" los datos iniciales, "second" para agregar imagenes
                   productCreated     : false, //almacenara el id del producto creado, para pasarlo a la  arga de imagenes
@@ -66,7 +68,7 @@ class Ecommerce extends React.Component
     this.fatherModel = new FatherCategory(this.props.token, routesFatherCat); //modelo categorias padres
     this.categoryModel = new Category(this.props.token, routesCategory);
     this.subCategory = new SubCategory(this.props.token, routesSubCat);
-    this.tagModel = new Tag(this.props.token, routesTags);
+    this.tagModel = new TagModel(this.props.token, routesTags);
     this.brandModel = new Brand(this.props.token, routesBrands);
     this.productModel = new Product(this.props.token, routeProducts);
 
@@ -90,7 +92,7 @@ class Ecommerce extends React.Component
 		var formData = new FormData(document.getElementById('formCreateProduct'))
     formData.append('agregarTagsCrearProducto',JSON.stringify(this.state.newTags))
 
-    this.productModel.saveProduct(formData, response =>{
+    this.productModel.save(formData, response =>{
       if(response.saved){
 
         helper.showMessage("success","Datos almacenados", "Debes agregar fotos a el producto")
@@ -391,7 +393,7 @@ class Ecommerce extends React.Component
 
   componentDidMount(){
 
-    this.fatherModel.setfatherCategoriesOptions( data => {
+    this.fatherModel.getFatherCategories( data => {
       this.setState({fatherCategories:data})
     })
 
@@ -785,7 +787,7 @@ class FormCreate extends React.Component
   */
 	ajaxGetCategories(id){
     var opts = [];
-    this.props.categoryModel.setCategories(id, data => {
+    this.props.categoryModel.getCategories(id, data => {
       data.forEach( cate => {
         opts.push(<option value={cate.id} key={"categoryOpt-"+cate.id}>{cate.name}</option>)
       })
@@ -1576,7 +1578,8 @@ class RowInputPic extends React.Component
 	constructor(props){
 		super(props)
 
-		this.state = { options:{aspectRatio: 1 / 1,
+		this.state = { src : this.props.defaultImg,
+			             options:{aspectRatio: 1 / 1,
   			                    viewMode: 1,
         						        dragMode: 'move',
         						        autoCropArea: 0.65,
@@ -1586,10 +1589,16 @@ class RowInputPic extends React.Component
         						        cropBoxMovable: true,
         						        cropBoxResizable: false,
         						        preview: "#preview-img-"+this.props.row},
-                    image : this.props.row,
+                   			 		image : this.props.row,
 					        }
 
-	    this.deleteImg = this.deleteImg.bind(this)
+			this.deleteImg 				= this.deleteImg.bind(this)
+			this.fileInput 				 = React.createRef();
+			this.changeImage 			 = this.changeImage.bind(this)
+			this.uploadImg 				 = this.uploadImg.bind(this)
+			this.updateBarProgress = this.updateBarProgress.bind(this)
+			this.finishUpload 		 = this.finishUpload.bind(this)
+			this.finishWhirError   = this.finishWhirError.bind(this)
 	}
 
 	//retorna un boton de eliminar si, esta en modo edicion
@@ -1642,7 +1651,7 @@ class RowInputPic extends React.Component
 
         if (window.FileReader) {
         	  //boton cambiar imagen
-            $inputImage.change( () => {
+          /*  $inputImage.change( () => {
                 var fileReader = new FileReader(),
                         files = $inputImage[0].files,
                         file;
@@ -1665,20 +1674,20 @@ class RowInputPic extends React.Component
                         cropper.destroy();
                         cropper = new Cropper(image,options)
 
-                        document.getElementById(barProgress).classList.remove("progress-bar-danger");
+                document.getElementById(barProgress).classList.remove("progress-bar-danger");
 				        document.getElementById(barProgress).classList.remove("active");
 				        document.getElementById(barProgress).classList.add("progress-bar-info");
 
                 } else {
                     helper.showMessage("error", "error imagen", "Por favor elije una imagen.");
                 }
-            });
+            }); */
 
             //boton subir imagen
 
-            $loadImge.on("click", (ev) => {
+       /*     $loadImge.on("click", (ev) => {
             	ev.preventDefault()
-            	cropper.getCroppedCanvas().toBlob(function (blob) {
+            	cropper.getCroppedCanvas().toBlob(function (blob) { 
 				      var formData = new FormData();
 
     				  formData.append('croppedImage', blob);
@@ -1688,30 +1697,39 @@ class RowInputPic extends React.Component
     				  	formData.append('img_id',imgId);
     				  }
 
-                  productModel.saveImg(formData, (evt)=>{
-                    var percent = (evt.loaded / evt.total) * 100;
-                    var width = Math.round(percent)+'%'
-                    console.log(`[debug] send img: ${width}`);
-                    document.getElementById(barProgress).style.width = width;
-                    },
-                    (response)=>{
-                      if(response.saved){
-                        helper.showMessage("success","Imagen guardada","Imagen guardada")
-                        showBtnFinish();
-                      }
-                      else{
-                        document.getElementById(barProgress).style.width = 0;
-                        response.errors.forEach( error => {
-                          helper.showMessage("error","Algo salió mal",error)
-                        })
-                      }
-                  },
-                  ()=>{
-                    document.getElementById(barProgress).style.width = width;
-                    helper.showMessage("error","Algo salió mal","La carga de la imagen falló")
-                  })
+							if(update){
+								  console.log(`[debug] estoy actualizando la imagen`)
+									productModel.editImg(formData)
+										.then(data => {console.log(`[debug] update foto: ${data}`, data)})
+							}
+							else{
+								console.log(`[debug] creando una nueva imagen`)
+									productModel.saveImg(formData, (evt)=>{
+										var percent = (evt.loaded / evt.total) * 100;
+										var width = Math.round(percent)+'%'
+										console.log(`[debug] send img: ${width}`);
+										document.getElementById(barProgress).style.width = width;
+										},
+										(response)=>{
+											if(response.saved){
+												helper.showMessage("success","Imagen guardada","Imagen guardada")
+												showBtnFinish();
+											}
+											else{
+												document.getElementById(barProgress).style.width = 0;
+												response.errors.forEach( error => {
+													helper.showMessage("error","Algo salió mal",error)
+												})
+											}
+									},
+									()=>{
+										document.getElementById(barProgress).style.width = width;
+										helper.showMessage("error","Algo salió mal","La carga de la imagen falló")
+									})
+							}
+              		
 				      });
-            })
+            }) */
 
         }
         else
@@ -1720,35 +1738,115 @@ class RowInputPic extends React.Component
         }
 	}
 
+	/**
+	 * actualiza la barra de progreso de imagenes
+	 * @param {object} evt 
+	 */
+	updateBarProgress(evt){
+		var percent = (evt.loaded / evt.total) * 100;
+		var width = Math.round(percent)+'%'
+		console.log(`[debug] send img: ${width}`);
+		document.getElementById("barProgress"+this.props.row).style.width = width;
+	}
+
+	finishUpload(response){
+		if(response.saved){
+			helper.showMessage("success","Imagen guardada","Imagen guardada")
+			this.props.showBtnFinish();
+		}
+		else{
+			document.getElementById("barProgress"+this.props.row).style.width = 0;
+			response.errors.forEach( error => {
+				helper.showMessage("error","Algo salió mal",error)
+			})
+		}
+	}
+
+	finishWhirError(){
+		document.getElementById("barProgress"+this.props.row).style.width = width;
+		helper.showMessage("error","Algo salió mal","La carga de la imagen falló")
+	}
+	
+	uploadImg(e){
+		e.preventDefault()
+		
+		if (typeof this.cropper.getCroppedCanvas() === 'undefined') {
+			console.log(`[debug] cropImage: no existe`)
+      return;
+		}
+
+		this.cropper.getCroppedCanvas().toBlob(blob => {
+							var formData = new FormData();
+
+    				  formData.append('croppedImage', blob);
+    				  formData.append('producto_id', this.props.productCreated);
+
+    				  if(this.props.update){
+    				  	formData.append('img_id',this.props.imgId);
+    				  }
+
+							if(this.props.update){
+								  console.log(`[debug] estoy actualizando la imagen`)
+									this.props.productModel.editImg(formData, this.updateBarProgress, this.finishUpload, this.finishWhirError)
+							}
+							else{
+								console.log(`[debug] creando una nueva imagen`)
+									this.props.productModel.saveImg(formData, this.updateBarProgress, this.finishUpload, this.finishWhirError)
+							}
+		})
+	}
+	
+	changeImage(e){
+		e.preventDefault()
+		let file = e.target.files;
+		console.log(`[debug] file: ${file}`,file.length, file[0])
+		console.log(`[debug] e.target: ${e.target}`,e.target)
+		//console.log(`[debug] this.fileInput.current.files[0].name: ${this.fileInput.current.files[0].name}`,this.fileInput.current.files[0].name)
+		const reader = new FileReader();
+
+    reader.onload = () => {
+      this.setState({ src: reader.result });
+		};
+		
+    reader.readAsDataURL(file[0]);
+	}
+
 	render(){
-	     return(<div className="row m-t-xs" id={"contCroperImg-"+this.props.row}>
-    	     			<div className="col s8">
-    	     				<img id={"grap"+this.props.row} style={maxImage} src={this.props.defaultImg}/>
-    	     			</div>
-    	     			<div className="col s4">
-    	     					<div className="col s12">
-    	     							<h4>Vista previa</h4>
+			 return(
+				 			<div className="row">
+							 		<div className="col s12 m8"> 
+									 <Cropper ref={cropper => { this.cropper = cropper; }}
+														src={this.state.src}
+														style={{height: 400, width: '100%'}}
+														preview={"#grap"+this.props.row}
+														// Cropper.js options
+														aspectRatio={1 / 1}
+														viewMode={1}
+														dragMode="move"
+														guides={true}
+														highlight={true}
+														cropBoxMovable={true}
+														cropBoxResizable={false}
+														 />
+									 </div>
+									 <div className="col s12 m4">
+											<div id={"grap"+this.props.row} style={cropperPreview}></div>
 
-    				     				<div className="img-preview img-preview-sm" id={"preview-img-"+this.props.row}>
-    				     					<img src={this.props.defaultImg} className="responsive-img"/>
-    				     				</div>
-
-    		     						         <div className="btn-group m-t-xs m-b-xs">
-    		     						               {this.renderBtnDelete()}
-    			                            <label title="Upload image file" htmlFor={"inputImage-"+this.props.row} className="btn btn-primary">
-    			                                <input type="file" accept="image/*" name="file" id={"inputImage-"+this.props.row} className="hide" onChange={this.changeImage}/>
-    			                                Selecionar imagen
-    			                            </label>
-    			                            <button className="btn btn-primary" id={"btnLoad-"+this.props.row}>Cargar <i className="fa fa-upload" aria-hidden="true"></i></button>
-    			                        </div>
-
-                                  <div className="progress">
-                                      <div className="determinate" id={"barProgress"+this.props.row} style={startProgressBar}></div>
-                                  </div>
-
-    								</div>
-    	     			</div>
-	     	    </div>)
+											<div className="btn-group m-t-xs m-b-xs">
+														{this.renderBtnDelete()}
+														<label title="Upload image file" htmlFor={"inputImage-"+this.props.row} className="btn btn-primary">
+															<input type="file" accept="image/*" name="file" id={"inputImage-"+this.props.row} ref={this.fileInput} className="hide" onChange={this.changeImage}/>
+															Selecionar imagen
+														</label>
+											
+													
+													<button className="btn btn-primary" id={"btnLoad-"+this.props.row} onClick={this.uploadImg}>Cargar <i className="fa fa-upload" aria-hidden="true"></i></button>
+											</div>
+											<div className="progress">
+												<div className="determinate" id={"barProgress"+this.props.row} style={startProgressBar}></div>
+											</div>
+									 </div>										
+							</div>)
     }
 }
 
@@ -1911,17 +2009,17 @@ class FormEditImages extends React.Component
 		this.state.shop_images.forEach( img => {
 
 			render.push(<RowInputPic row={"inputEdit-"+img.id}
-                                     deleteFieldInput={this.deleteFieldInput}
-                                     key={"inputEdit-"+img.id}
-                                     defaultImg={img.route}
-                                     routeSubmit={this.props.routeEditImg}
-                                     routeDeleteImg={this.props.routeDeleteImg}
-                                     productCreated={this.props.productEdit.id}
-                                     showBtnFinish={this.showBtnFinish}
-                                     update={true}
-                                     token={this.props.token}
-                                     imgId={img.id}
-                                     productModel={this.props.productModel}/>)
+                               deleteFieldInput={this.deleteFieldInput}
+                               key={"inputEdit-"+img.id}
+                               defaultImg={img.route}
+                               routeSubmit={this.props.routeEditImg}
+                               routeDeleteImg={this.props.routeDeleteImg}
+                               productCreated={this.props.productEdit.id}
+                               showBtnFinish={this.showBtnFinish}
+                               update={true}
+                               token={this.props.token}
+                               imgId={img.id}
+                               productModel={this.props.productModel}/>)
 		})
 		return render
 	}
@@ -1994,9 +2092,6 @@ class ModalViewProduct extends React.Component
         console.log(`[debug] foto ruta: ${image.route}`);
       })
       this.setState({fotos:carrousel})
-      /*var elemCar = document.querySelectorAll('#carouselProduct');
-      console.log(`[debug] elemCar: ${elemCar}`, elemCar);
-      var instanceCar = M.Carousel.init(elemCar,{}) */
     }
   }
 

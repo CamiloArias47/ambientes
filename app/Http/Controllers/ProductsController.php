@@ -715,6 +715,44 @@ class ProductsController extends Controller
       return response()->json(["saved" => $saved]);
   }
 
+  /**
+   * maneja peticiones post para editar una imagen de un producto
+   */
+  public function ajaxEditImg(Request $request)
+  {
+      $saved          = false;
+      $productUpdated = null;
+
+      $validator = Validator::make($request->all(),["croppedImage" => 'image|dimensions:min_width=420,min_height=420'],
+                                                    ["croppedImage.dimensions" => "La imagen debe tener como minimo 420px de ancho por 420px de alto"]);
+
+      if($validator->fails()){
+          return response()->json(["saved" => $saved, "errors" => $validator->errors()->all()]);
+      }
+
+      $image = Shop_image::find($request->img_id);
+
+      $img        = $request->file('croppedImage');
+      $nombreFoto = time().'-'.$this->sinCaracteresRaros($img->getClientOriginalName()).'.'.$img->getClientOriginalExtension();
+      Storage::disk('ecommerceProducts')->put($nombreFoto, file_get_contents($img->getRealPath() ) ); 
+
+      Storage::disk('ecommerceProducts')->delete($image->route);
+
+      $image->route = $nombreFoto;
+      
+      if( $image->save() ){
+         $productUpdated = Shop_product::find($request->producto_id);
+         $productUpdated->shop_tags;
+         $productUpdated->shop_images;
+         $productUpdated->shop_subcategory;
+         $productUpdated->shop_brand;
+
+         $saved          = true;
+      }
+
+      return response()->json(["saved" => $saved, "productUpdated" => $productUpdated]);
+  }
+
 
   /**
   *Elimina un tag de un producto, maneja peticiones post

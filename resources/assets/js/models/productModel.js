@@ -23,9 +23,10 @@ class Product
     this.token = token
     this.routes = routes
     this.opts =  {headers: {'Accept': 'application/json',
-                           'Content-Type': 'application/json',
+                           'Content-Type': 'application/json', //para enviar archivos esto se debe quitar 
                            'X-CSRF-TOKEN': token},
                  method:'POST'}
+    
   }
 
   /**
@@ -139,6 +140,43 @@ class Product
          error()
        }
      });
+   }
+
+   /**
+    * Editar imagen
+    * @param {Formdata} formData imagen y datos para actualizar la imagen
+    * @param {function} progress función que se ejecuta durante la carga d ela imagen
+    * @param {function} success función que se ejecuta cuando termina la petición al servidor
+    * @param {function} error función que se ejecuta cuando hay un error en la petición
+    * @return {void} ejecuta una callback
+    */
+   editImg(formData, progress, success, error){
+
+      $.ajax({
+        url:this.routes.editImg,
+        method: "POST",
+        headers:{'X-CSRF-TOKEN': this.token},
+        data: formData,
+        processData: false,
+        contentType: false,
+        xhr: function() { //esta funcion permite la comunicación con el servidor durante la carga
+            var xhr = new window.XMLHttpRequest();
+            xhr.upload.addEventListener("progress", function(evt) {
+                if (evt.lengthComputable) {
+                    progress(evt);
+                }
+           }, false);
+ 
+           return xhr;
+        },
+        success: function (response) {
+          success(response)
+        },
+        error: function () {
+          error()
+        }
+      });
+
    }
 
 
