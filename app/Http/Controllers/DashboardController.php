@@ -13,4 +13,8 @@ class DashboardController extends Controller
     public function index(){
       return view('dashboard.dashboard');
     }
+
+    public function getUserAuth(Request $request){
+        return response()->json(["name" => auth()->user()->name, "email" => auth()->user()->email]);
+    }
 }

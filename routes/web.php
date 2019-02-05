@@ -16,11 +16,8 @@ Route::get('servicios-ambientales', function () {return view('servicios'); });
 Route::get('empresa', function(){return view('empresa'); });
 Route::get('productos', function(){return view('productos'); });
 
-Route::get('intranet', 'Auth\LoginController@ShowLoginForm')->name('intranet');
-
 Route::post('login', 'Auth\LoginController@login')->name('login');
 Route::post('logout', 'Auth\LoginController@logout')->name('logout');
-//Route::get('dashboard', 'ProductsController@index')->name('dashboard');
 
 //Mapea todas las rutas para /dashboard, el rooteo lo maneja react-router
 Route::get('/dashboard/{path?}', [
@@ -46,6 +43,10 @@ Route::group( ["prefix" => "products"], function(){
   Route::post('editImg', 'ProductsController@ajaxEditImg')->name('product.editimg');
 });
 
+Route::group( ["prefix" => "user"], function(){
+  Route::post('getuser', 'DashboardController@getUserAuth')->name('user.getuser');
+});
+
 //___________________________Ecommerce_public__________________________________
   //Mapea todas las rutas para /ecotienda, el rooteo lo maneja react-router
   Route::get('/ecotienda/{path?}', [
@@ -66,3 +67,7 @@ Route::group( ["prefix" => "products"], function(){
     Route::post('email',                  'EcommerceController@mails')->name('shop.email');
   });
   */
+
+Auth::routes();
+
+Route::get('/home', 'HomeController@index')->name('home');

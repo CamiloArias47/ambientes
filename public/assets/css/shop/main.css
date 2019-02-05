@@ -49,13 +49,6 @@
 	}
 
 
-
-	@media only screen and (min-width : 992px) {
-		#topNav{
-		    display: none;
-		}
-	}
-
 	.nav-wrapper{
 		padding-left: 400px;
 	}

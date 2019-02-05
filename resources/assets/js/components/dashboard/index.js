@@ -34,26 +34,29 @@ class Main extends React.Component{
 
   render(){
 
+        var {images,user, routes, token, defaultImg, maxUpload, products, prev} = this.props;
+
         return(<Router>
              <div>
                 <ul id="slide-out" className="sidenav sidenav-fixed">
                   <li>
                     <div className="user-view">
                       <div className="background">
-                        <img src={ this.props.images.backgroundMenu } />
+                        <img src={ images.backgroundMenu } />
                       </div>
-                      <a href="#user"><img className="circle" src={this.props.user.profileImg}/></a>
-                      <a href="#name"><span className="white-text name">{this.props.user.name}</span></a>
-                      <a href="#email"><span className="white-text email">{this.props.user.email}</span></a>
+                      <a href="#user"><img className="circle" src={user.profileImg}/></a>
+                      <a href="#name"><span className="white-text name">{user.name}</span></a>
+                      <a href="#email"><span className="white-text email">{user.email}</span></a>
                     </div>
                   </li>
-                  <li><Link to="/dashboard"><i className="material-icons">home</i> Home</Link></li>
+                  <li><a href={routes.shop}><i className="material-icons">home</i>Ecotienda</a></li>
+                  <li><Link to="/dashboard"><i className="material-icons">pie_chart</i> Home</Link></li>
                   <li><Link to="/dashboard/ecommerce"><i className="material-icons">shopping_cart</i> Ecommerce</Link></li>
                   <li><div className="divider"></div></li>
                   <li><a className="subheader">Subheader</a></li>
                   <li>
-                    <form method="POST" action={this.props.routes.logout}>
-                      <input type="hidden" name="_token" value={this.props.token}/>
+                    <form method="POST" action={routes.logout}>
+                      <input type="hidden" name="_token" value={token}/>
                       <button type="submit" className="btnExitSession"><i className="material-icons left">exit_to_app</i>Cerrar sesión</button>
                     </form>
                   </li>
@@ -69,8 +72,8 @@ class Main extends React.Component{
                         <li><a href="#"><i className="material-icons">view_module</i></a></li>
                         <li><a href="#"><i className="material-icons">refresh</i></a></li>
                         <li>
-                            <form method="POST" action={this.props.routes.logout}>
-                              <input type="hidden" name="_token" value={this.props.token}/>
+                            <form method="POST" action={routes.logout}>
+                              <input type="hidden" name="_token" value={token}/>
                               <button type="submit" className="btnExitSession"><i className="material-icons left">exit_to_app</i>Cerrar sesión</button>
                             </form>
 
@@ -80,12 +83,12 @@ class Main extends React.Component{
                   </nav>
 
                   <div> 
-                    <Route path="/dashboard/ecommerce" render={ (props) => <Ecommerce {...props} routes={this.props.routes}
-                                                                                                 token={this.props.token}
-                                                                                                 defaultImg={this.props.defaultImg}
-                                                                                                 maxUpload={this.props.maxUpload}
-                                                                                                 products={this.props.products}
-                                                                                                 prev={this.props.prev}
+                    <Route path="/dashboard/ecommerce" render={ (props) => <Ecommerce {...props} routes={routes}
+                                                                                                 token={token}
+                                                                                                 defaultImg={defaultImg}
+                                                                                                 maxUpload={maxUpload}
+                                                                                                 products={products}
+                                                                                                 prev={prev}
                                                                                                  setTitleModule={this.setTitleModule} /> }
                     />
 

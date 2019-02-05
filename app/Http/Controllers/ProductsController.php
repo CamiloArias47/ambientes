@@ -178,7 +178,7 @@ class ProductsController extends Controller
                 $haveTags = false; //en caso de que esta creando un producto o accesorio entonces no tiene tags aún, le ponemos false
             }
 
-            if(!$haveTags && $request->crearTagsCrearProducto == "" && count($request->tagsCrearProducto) == 0){
+            if(!$haveTags && $request->crearTagsCrearProducto == "" && $request->tagsCrearProducto == NULL){
                 $validator->errors()->add('Agrega tags', 'Debes agregar tags al producto');
             }
         });

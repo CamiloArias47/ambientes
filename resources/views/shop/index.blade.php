@@ -79,10 +79,16 @@
                             busqueda: "#"},
                    fatherC: {!! $fatherC !!},
 									 bannerImg : "{!! asset('assets/img/tienda.jpg') !!}",
-									 token : "{!! csrf_token() !!}",
+                   token : "{!! csrf_token() !!}",
+                   auht : "{!! Auth::check() !!}",
 									 routes : {getProducts : "{!! route('products.getproducts') !!}",
                              getProduct: "{!! route('products.getProduct') !!}",
-                             filter : "{!! route('products.filter') !!}"},
+                             filter : "{!! route('products.filter') !!}",
+                             logIn : "{!! route('login') !!}",
+                             register : "{!! route('register') !!}",
+                             dashboard : "{!! route('dashboard') !!}",
+                             logOut: "{!! route('logout') !!}",
+                             getuser: "{!! route('user.getuser') !!}"},
 									 imgDefaultProduct : "{!! asset('assets/img/products/default.jpg')!!}",
 									 }
 

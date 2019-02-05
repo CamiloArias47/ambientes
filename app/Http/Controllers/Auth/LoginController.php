@@ -9,7 +9,7 @@ use Auth;
 class LoginController extends Controller
 {
   public function __construct(){
-      $this->middleware('guest', ['only'=>'ShowLoginForm']);
+      $this->middleware('guest',['except'=>'logout']);
   }
 
   public function login(){
@@ -20,7 +20,7 @@ class LoginController extends Controller
     ]);
 
     if (Auth::attempt($credentials) ){
-      return redirect()->route('dashboard');
+      return redirect()->route('shop');
     }
 
     return back()->withErrors([$this->UserName() => "credenciales incorrectas"]);
@@ -33,7 +33,7 @@ class LoginController extends Controller
   public function logout(){
     Auth::logout();
 
-    return redirect('/');
+    return redirect('/ecotienda');
   }
 
   public function UserName(){

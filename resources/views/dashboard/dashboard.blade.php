@@ -19,7 +19,6 @@
   </head>
   <body>
 
-
       <div id="ReactRoot">
         <div style="text-align:center; margin-top:5em;">
           <div class="preloader-wrapper big active">
@@ -83,6 +82,7 @@
                     profileImg:"{!! asset('assets/img/camilo.jpg') !!}"},
           images = {backgroundMenu : "{!! asset('assets/img/lines.jpg') !!}"},
           token  = "{!! csrf_token() !!}",
+          sessionStatus = "{!! session('status') !!}",
           routes = {logout : "{!! route('logout') !!}",
                     getFatherCategories : "{!! route('fathercategories') !!}",
                     getCategories: "{!! route('getcategories') !!}",
@@ -96,7 +96,8 @@
                     editProduct : "{!! route('products.edit') !!}",
                     getProduct : "{!! route('products.getProduct') !!}",
                     filterProducts : "{!! route('products.filter')!!}",
-                    editImg : "{!! route('product.editimg') !!}"};
+                    editImg : "{!! route('product.editimg') !!}",
+                    shop : "{!! route('shop')!!}" };
 
           //estas variables es mejor setearlas cuando se cargue el componente con un ajax o un fetch
           var fatherCategories = {!!$fatherCategories!!},

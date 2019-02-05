@@ -1,6 +1,7 @@
 import React     from 'react'
 import ReactDOM  from 'react-dom'
-import ProductModel from '../../../models/productModel'
+import {User,
+        Product as ProductModel} from '../../../models'
 import { BrowserRouter as Router, Route } from "react-router-dom";
 import Product from './product.js'
 import ViewCategory from './category'
@@ -93,13 +94,16 @@ class Index extends React.Component{
   constructor(props){
     super(props)
 
-    this.state = {product:null}
+    this.state = {product:null,
+                  user: {name:"nombre",
+                         email:"email"}}
 
     var routesproducts = {getProducts: this.props.props.routes.getProducts,
                           getProduct: this.props.props.routes.getProduct,
                           filter: this.props.props.routes.filter}
 
     this.productModel = new ProductModel(this.props.props.token, routesproducts)
+    this.userModel = new User(this.props.props.token, {getuser: this.props.props.routes.getuser})
 
   }
 
@@ -112,16 +116,32 @@ class Index extends React.Component{
                                              //console.log(`Overlay : ${overlay}`, overlay[0]);
                                            } });
     var instance = M.Sidenav.getInstance(elems[0]);
+
+    if(this.props.props.auht == "1"){
+      console.log(`Entre aca`)
+      this.userModel.getUser.then(data => this.setState({user: data}))
+                            .catch(e => console.error(`[debug] error al obtener usuario ${e}`));
+    }
   }
 
   render(){
     return(<Router>
             <div>
                 <SocialBar/>
-                <NavBar />
+                <NavBar loginStatus={this.props.props.auht} 
+                        logInRoute={this.props.props.routes.logIn}
+                        register={this.props.props.routes.register}
+                        dashboard={this.props.props.routes.dashboard}
+                        logOut={this.props.props.routes.logOut}
+                        token={this.props.props.token}
+                        user={this.state.user}/>
                 <Menu routes={this.props.props.routes}
                       logo={this.props.props.logo}
-                      fatherC={this.props.props.fatherC}/>
+                      fatherC={this.props.props.fatherC}
+                      user={this.state.user}
+                      loginStatus={this.props.props.auht} 
+                      token={this.props.props.token}
+                      dashboard={this.props.props.routes.dashboard}/>
                 <main>
                   <Route path="/ecotienda" exact render={ (props) => <Home bannerImg={this.props.props.bannerImg}
                                                                            productModel={this.productModel}
@@ -144,6 +164,7 @@ class Index extends React.Component{
           </Router>)
   }
 }
+
 
 
 setTimeout(()=>{

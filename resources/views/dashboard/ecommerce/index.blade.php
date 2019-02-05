@@ -76,7 +76,7 @@
                 brands           = {!!$brands!!},
                 tags             = {!!$tags!!},
                 maxUpload        = "{{$maxUpload}}",
-                products         = {!!$products!!},
+				products         = {!!$products!!},
                 defaultImg       = "{{ asset('image/ecommerce/products/default.png') }}",
 								prev       			 = "{!!$prev!!}",
                 routes = {}

@@ -28,7 +28,7 @@ class RegisterController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = '/home';
+    protected $redirectTo = '/ecotienda';
 
     /**
      * Create a new controller instance.
@@ -52,8 +52,10 @@ class RegisterController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
-        ]);
+        ],['password.confirmed' => 'Las contraseñas no coinciden',
+           'email.email' => 'Ingrese un email valido']);
     }
+
 
     /**
      * Create a new user instance after a valid registration.
@@ -68,5 +70,13 @@ class RegisterController extends Controller
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
         ]);
+    }
+
+    public function showRegistrationForm(){
+        return view('auth.register'); 
+    }
+
+    protected function redirectPath(){
+        return '/ecotienda';
     }
 }

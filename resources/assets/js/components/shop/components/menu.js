@@ -14,13 +14,29 @@
 import React from 'react'
 import { Link } from "react-router-dom";
 
+const btnClose =  {border: "none",
+                   backgroundColor: "transparent",
+                   padding: "0 23.5px 0 31px",
+                   textAlign : "left",
+                   fontSize: "14px",
+                   width: "100%"}
+
 /**
 * Renderiza el menú izquierdo
 * @prop {object} routes //rutas de la app
 * @prop {string} logo //ruta del logo de la tienda
 * @prop {object} fatherC //categorias padre
+* @prop {string} loginStatus //Indica si hay una sessión activa, 1 = true.
+* @prop {object} user //información del usuario logueado
+* @prop {string} token token de seguridad
+* @prop {string} dashboard ruta para acceder al dashboard
 */
 class Menu extends React.Component{
+
+    componentDidMount(){
+      var elems = document.querySelectorAll('.collapsible');
+      var instances = M.Collapsible.init(elems, {});
+    }
 
     setList(){
       var list = []
@@ -31,11 +47,43 @@ class Menu extends React.Component{
     }
   
     render(){
+      var {logo,routes,loginStatus,user, token, dashboard} = this.props;
+      var liOptions;
+
+      if(loginStatus == "1"){
+        liOptions = <li className="no-padding">
+                      <ul className="collapsible collapsible-accordion">
+                        <li>
+                          <a className="collapsible-header">{user.name}<i className="material-icons">arrow_drop_down</i></a>
+                          <div className="collapsible-body">
+                            <ul>
+                              <li>
+                                <form method="POST" action={routes.logOut} >
+                                  <input type="hidden" name="_token" value={token}/>
+                                  <button type="submit" style={btnClose}>Salir</button>
+                                </form>
+                              </li>
+                              <li>
+                                <a href={dashboard} className="collapsible-header waves-effect waves-green">Panel de administración</a>
+                              </li>
+                            </ul>
+                          </div>
+                        </li>
+                      </ul>
+                    </li>
+      }
+      else{
+        liOptions = <div>
+                          <li><a href={routes.logIn} >Iniciar sessión</a></li>
+                          <li><a href={routes.register} >Registrarsé</a></li>
+                    </div>
+      }
+
       return(<ul id="slide-out" className="sidenav sidenav-fixed">
                         <li id="logoMain">
                           <div className="user-view">
                                 <div className="responsive-img">
-                                  <center><a href={this.props.routes.shop}><img src={this.props.logo} style={ {width:"100%"} }/></a><br/></center>
+                                  <center><a href={routes.shop}><img src={logo} style={ {width:"100%"} }/></a><br/></center>
                                 </div>
                           </div>
                       </li>
@@ -44,7 +92,7 @@ class Menu extends React.Component{
                       </li>
                 
                   <li className="search">
-                      <form method="GET" action={this.props.routes.busqueda} autoComplete="off" role="search">
+                      <form method="GET" action={routes.busqueda} autoComplete="off" role="search">
   
                                <div className="search-wrapper card">
                                   <input id="search" name="search"/><i className="material-icons" placeholder="Buscar..." value="">search</i>
@@ -53,6 +101,8 @@ class Menu extends React.Component{
   
                       </form>
                   </li>
+                  
+                  {liOptions}
 
                   {this.setList()}
   
@@ -100,14 +150,6 @@ class LiFatherC extends React.Component{
                 </div>
               </li>
             </ul>
-          </li>)
-
-    return(<li className="bold"><a className="collapsible-header waves-effect waves-orange list"><b className="list">{this.props.father.name}</b></a>
-              <div className="collapsible-body">
-                  <ul className="collapsible " data-collapsible="expandable">
-                      {this.state.list}
-                  </ul>
-              </div>
           </li>)
   }
 }

@@ -1633,103 +1633,9 @@ class RowInputPic extends React.Component
 	}
 
 	componentDidMount(){
-		var image              = document.getElementById('grap'+this.props.row),
-		    barProgress        = "barProgress"+this.props.row,
-		    options            = this.state.options,
-		    cropper            = new Cropper(image, this.state.options),
-  			$inputImage        = $("#inputImage-"+this.props.row),
-  			$loadImge          = $("#btnLoad-"+this.props.row),
-  			routeSubmit        = this.props.routeSubmit,
-  			producto_id        = this.props.productCreated,
-  			showBtnFinish      = this.props.showBtnFinish,
-  			update             = this.props.update,
-  			imgId              = this.props.imgId,
-        token              = this.props.token,
-        productModel  = this.props.productModel,
-  		  uploadedImageURL
-
+		var $inputImage = $("#inputImage-"+this.props.row)
 
         if (window.FileReader) {
-        	  //boton cambiar imagen
-          /*  $inputImage.change( () => {
-                var fileReader = new FileReader(),
-                        files = $inputImage[0].files,
-                        file;
-
-                if (!files.length) {
-                    return;
-                }
-
-                file = files[0];
-
-                if (/^image\/\w+$/.test(file.type)) {
-
-                	if (uploadedImageURL) {
-			            URL.revokeObjectURL(uploadedImageURL);
-			        }
-
-			        image.src = uploadedImageURL = URL.createObjectURL(file);
-
-                        $inputImage.val("");
-                        cropper.destroy();
-                        cropper = new Cropper(image,options)
-
-                document.getElementById(barProgress).classList.remove("progress-bar-danger");
-				        document.getElementById(barProgress).classList.remove("active");
-				        document.getElementById(barProgress).classList.add("progress-bar-info");
-
-                } else {
-                    helper.showMessage("error", "error imagen", "Por favor elije una imagen.");
-                }
-            }); */
-
-            //boton subir imagen
-
-       /*     $loadImge.on("click", (ev) => {
-            	ev.preventDefault()
-            	cropper.getCroppedCanvas().toBlob(function (blob) { 
-				      var formData = new FormData();
-
-    				  formData.append('croppedImage', blob);
-    				  formData.append('producto_id', producto_id);
-
-    				  if(update){
-    				  	formData.append('img_id',imgId);
-    				  }
-
-							if(update){
-								  console.log(`[debug] estoy actualizando la imagen`)
-									productModel.editImg(formData)
-										.then(data => {console.log(`[debug] update foto: ${data}`, data)})
-							}
-							else{
-								console.log(`[debug] creando una nueva imagen`)
-									productModel.saveImg(formData, (evt)=>{
-										var percent = (evt.loaded / evt.total) * 100;
-										var width = Math.round(percent)+'%'
-										console.log(`[debug] send img: ${width}`);
-										document.getElementById(barProgress).style.width = width;
-										},
-										(response)=>{
-											if(response.saved){
-												helper.showMessage("success","Imagen guardada","Imagen guardada")
-												showBtnFinish();
-											}
-											else{
-												document.getElementById(barProgress).style.width = 0;
-												response.errors.forEach( error => {
-													helper.showMessage("error","Algo salió mal",error)
-												})
-											}
-									},
-									()=>{
-										document.getElementById(barProgress).style.width = width;
-										helper.showMessage("error","Algo salió mal","La carga de la imagen falló")
-									})
-							}
-              		
-				      });
-            }) */
 
         }
         else
@@ -1857,6 +1763,11 @@ class RowInputPic extends React.Component
 //modal para editar un producto
 class ModalEdit extends React.Component
 {
+	constructor(props){
+		super(props)
+		this.closeModal = this.closeModal.bind(this)
+	}
+
 	renderAForm(){
 		if(this.props.pageFormEdit == "first"){
 			return  <FormCreate fatherCategories={this.props.fatherCategories}
@@ -1905,6 +1816,7 @@ class ModalEdit extends React.Component
 	}
 
   closeModal(){
+		this.props.finishUpdate();
     var instance = M.Modal.getInstance(document.getElementById('modalEditProduct'));
     instance.close();
   }
