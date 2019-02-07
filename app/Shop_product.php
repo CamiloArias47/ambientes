@@ -31,6 +31,11 @@ class Shop_product extends Model
         return $this->belongsToMany('App\Shop_accessory','shop_accessory_shop_product');
     }
 
+    public function user()
+    {
+        return $this->belongsTo('App\User');
+    }
+
     //::::::::: Scope ::::::::::::::::
     public function scopeProduct($query, $search)
     {

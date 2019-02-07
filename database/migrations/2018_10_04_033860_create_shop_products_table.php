@@ -21,6 +21,7 @@ class CreateShopProductsTable extends Migration
             $table->string('meta_description',1000);
             $table->integer('shop_brand_id')->unsigned();
             $table->biginteger('price');
+            $table->integer('user_id')->unsigned();
             $table->integer('shop_subcategory_id')->unsigned();
             $table->enum('showproduct',["no","si"]);
             $table->enum('showprice',["no","si"]);
@@ -33,6 +34,10 @@ class CreateShopProductsTable extends Migration
                                                   ->on('shop_subcategories')
                                                   ->onUpdate('cascade')
                                                   ->onDelete('cascade');
+            $table->foreign('user_id')->references('id')
+                                      ->on('users')
+                                      ->onUpdate('cascade')
+                                      ->onDelete('cascade');
 
         });
     }
