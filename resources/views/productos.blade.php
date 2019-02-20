@@ -68,8 +68,7 @@
           promoviendo un consumo ecológico.<br />
         </div>
         <div class="col s4 center promo">
-          <i class="material-icons">location_on
-            </i>
+          <i class="material-icons">location_on</i>
           Reutilizamos todo lo posible, apostamos por
           las energías renovables y el uso de materiales
           que sean reciclados o se puedan aprovechar,
@@ -94,67 +93,67 @@
       </div>
       <div class="row font-size-1-2em">
         <div class="col s12 m6">
-
+          <i class="material-icons iconPromo">local_shipping</i>
         </div>
-        <div class="col s12 m6">
+        <div class="col s12 m6 margin40">
           Promocionamos e impulsando la consolidación de acceso a los productos y de todo el
           proceso de entrega hasta el cliente final
         </div>
       </div>
 
       <div class="row font-size-1-2em">
-        <div class="col s12 m6">
+        <div class="col s12 m6 margin40">
           Vendemos a través de nuestra plataforma virtual la cual permite tener el negocio
           funcionando 24 horas al día, 7 días a la semana, 365 días al año .
         </div>
-        <div class="col s12 m6">
-
+        <div class="col s12 m6 iconPromo">
+          <i class="material-icons iconPromo">access_time</i>
         </div>
       </div>
 
       <div class="row font-size-1-2em">
-        <div class="col s12 m6">
-
+        <div class="col s12 m6 iconPromo">
+          <i class="material-icons iconPromo">local_grocery_store</i>
         </div>
-        <div class="col s12 m6">
+        <div class="col s12 m6 margin40">
           Focalizamos nuestro esfuerzo en visibilizar y promover sus productos y servicios orientando
           al cliente en tomar decisiones de compra educadas, las cuales marcan la diferencia frente al
           consumo tradicional
         </div>
       </div>
       <div class="row font-size-1-2em">
-        <div class="col s12 m6">
+        <div class="col s12 m6 margin40">
           Ofrecemos un acceso inmediato a un mercado de clientes potenciales en Cali, debido a que
           participamos en eventos y congresos ambientales y varias plataformas de comercio local.
         </div>
-        <div class="col s12 m6">
-
+        <div class="col s12 m6 iconPromo">
+          <i class="material-icons iconPromo">location_on</i>
         </div>
       </div>
       <div class="row font-size-1-2em">
-        <div class="col s12 m6">
+        <div class="col s12 m6 iconPromo">
+          <i class="material-icons iconPromo">work</i>
+        </div>
+        <div class="col s12 m6 margin40">
           Construimos relaciones comerciales competitivas, de confianza en el largo plazo, que
           generen un valor agregado y crecimiento mutuo.
         </div>
-        <div class="col s12 m6">
-
-        </div>
       </div>
       <div class="row font-size-1-2em">
-        <div class="col s12 m6">
-
-        </div>
-        <div class="col s12 m6">
+        <div class="col s12 m6 margin40">
           Promovemos conexiones comerciales y apoyamos emprendimientos verdes, que generen
           valor, aumenten sus ventas, y quieran mejorar sus ingresos.
         </div>
+        <div class="col s12 m6 iconPromo">
+          <i class="material-icons iconPromo">trending_up</i>
+        </div>
       </div>
       <div class="row font-size-1-2em">
-        <div class="col s12 m6">
-          No somos ente gubernamental, por lo que nos interesa que en la realidad se ejecuten ventas
+        <div class="col s12 m6 iconPromo">
+          <i class="material-icons iconPromo">attach_money</i>
         </div>
-        <div class="col s12 m6">
-
+        <div class="col s12 m6 margin40">
+          No somos ente gubernamental, por lo que nos interesa que en la realidad se ejecuten ventas
         </div>
       </div>
 
