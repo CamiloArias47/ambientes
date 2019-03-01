@@ -260,23 +260,30 @@
     <div class="section">
         <div class="container">
             <div class="tim-title">
-                <h3>Equipo</h3>
+                <h1>Equipo</h1>
             </div>
             <div class="row">
                 <div class="col-6 col-sm-3 col-md-2 mr-auto  ml-auto">
-                    <h4 class="images-title">Joe Gardner</h4>
-                    <img src="{{asset('assets/img/faces/kaci-baum-2.jpg')}}" class="img-circle img-no-padding img-responsive" alt="Rounded Image">
-                    <p class="text-center">Diseño</p>
+                    <h4 class="images-title">Lorena Escobar</h4>
+                    <img src="{{asset('assets/img/faces/LorenaEscobarQuiñones.jpg')}}" class="img-circle img-no-padding img-responsive" alt="Rounded Image">
+                    <p class="text-center">Responsable de la Puesta en Marcha de los proyectos.<br />
+                                            Ing. Agrónoma
+                                            Universidad Nacional de Colombia.
+                    </p>
                 </div>
                 <div class="col-6 col-sm-3 col-md-2 mr-auto  ml-auto">
-                    <h4 class="images-title">Zoé Hernandez</h4>
-                    <img src="{{asset('assets/img/faces/joe-gardner-2.jpg')}}" class="img-circle img-no-padding img-responsive" alt="Rounded Image">
-                    <p class="text-center">Proyectos</p>
+                    <h4 class="images-title">Carlos Escobar</h4>
+                    <img src="{{asset('assets/img/faces/CarlosEscobar.jpg')}}" class="img-circle img-no-padding img-responsive" alt="Rounded Image">
+                    <p class="text-center">Responsable de la Coordinación de proyectos.<br />
+                                            Ing. Ambiental
+                                            Universidad Nacional de Colombia.</p>
                 </div>
                 <div class="col-6 col-sm-3 col-md-2 mr-auto  ml-auto">
-                    <h4 class="images-title">Camilo Arias</h4>
-                    <img src="{{asset('assets/img/faces/clem-onojeghuo-2.jpg')}}" class="img-circle img-no-padding img-responsive" alt="Rounded Image">
-                    <p class="text-center">Programación</p>
+                    <h4 class="images-title">Jeyilut   Cano</h4>
+                    <img src="{{asset('assets/img/faces/JeiyilutCano.jpg')}}" class="img-circle img-no-padding img-responsive" alt="Rounded Image">
+                    <p class="text-center">Marketing Ambiental y atención al cliente.<br />
+                                            Tec. Producción agrícola y  Bioinsumos
+                                            SENA CLEM Tuluá</p>
                 </div>
             </div>
         </div>
