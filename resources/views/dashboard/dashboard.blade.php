@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    
+
     <link type="text/css" rel="stylesheet" href="{{asset('assets/css/dashboard/style.css')}}"/>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link type="text/css" rel="stylesheet" href="{{asset('assets/plugins/materialize_1/css/materialize.css')}}"  media="screen,projection"/>
@@ -97,7 +97,9 @@
                     getProduct : "{!! route('products.getProduct') !!}",
                     filterProducts : "{!! route('products.filter')!!}",
                     editImg : "{!! route('product.editimg') !!}",
-                    shop : "{!! route('shop')!!}" };
+                    shop : "{!! route('shop')!!}",
+                    delete: "{!! route('product.delete') !!}"
+                   };
 
           //estas variables es mejor setearlas cuando se cargue el componente con un ajax o un fetch
           var fatherCategories = {!!$fatherCategories!!},

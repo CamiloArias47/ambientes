@@ -23,10 +23,10 @@ class Product
     this.token = token
     this.routes = routes
     this.opts =  {headers: {'Accept': 'application/json',
-                           'Content-Type': 'application/json', //para enviar archivos esto se debe quitar 
+                           'Content-Type': 'application/json', //para enviar archivos esto se debe quitar
                            'X-CSRF-TOKEN': token},
                  method:'POST'}
-    
+
   }
 
   /**
@@ -166,7 +166,7 @@ class Product
                     progress(evt);
                 }
            }, false);
- 
+
            return xhr;
         },
         success: function (response) {
@@ -221,8 +221,26 @@ class Product
           return reject( data )
         } )
         .catch( e => reject(e))
-     }) 
-     //return fetch(this.routes.filter, this.opts)         
+     })
+     //return fetch(this.routes.filter, this.opts)
+   }
+
+
+   /**
+   *"elimina" un producto de la base de datos
+   @param {int} id
+   */
+   desactivate(id){
+     var opts = this.opts
+     opts.body = JSON.stringify({id:id})
+     return new Promise( (resolve, reject) => {
+       fetch(this.routes.delete, opts)
+        .then(response => response.json())
+        .then( data => {
+          if(data.deleted) return resolve(data)
+          return reject(data)
+        })
+     })
    }
 
 }

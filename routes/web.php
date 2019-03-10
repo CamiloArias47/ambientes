@@ -41,6 +41,7 @@ Route::group( ["prefix" => "products"], function(){
   Route::post('getProduct', 'ProductsController@responseGetProduct')->name('products.getProduct');
   Route::post('filter', 'ProductsController@filterProducts')->name('products.filter');
   Route::post('editImg', 'ProductsController@ajaxEditImg')->name('product.editimg');
+  Route::post('delete',  'ProductsController@delete')->name('product.delete')->middleware('auth');
 });
 
 Route::group( ["prefix" => "user"], function(){

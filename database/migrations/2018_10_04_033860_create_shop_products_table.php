@@ -25,6 +25,7 @@ class CreateShopProductsTable extends Migration
             $table->integer('shop_subcategory_id')->unsigned();
             $table->enum('showproduct',["no","si"]);
             $table->enum('showprice',["no","si"]);
+            $table->enum('deleted',["no","si"])->default("no");
             $table->timestamps();
             $table->foreign('shop_brand_id')->references('id')
                                             ->on('shop_brands')

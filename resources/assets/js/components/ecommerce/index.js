@@ -40,12 +40,14 @@ class Ecommerce extends React.Component
                              deleteTag:this.props.routes.deleteTag,
                              editProduct: this.props.routes.editProduct,
 														 filterProducts: this.props.routes.filterProducts,
-														 editImg : this.props.routes.editImg}
+														 editImg : this.props.routes.editImg,
+													   delete : this.props.routes.delete}
 
 		this.state = {pageForm           :'first', //renderiza un formulario, "first" los datos iniciales, "second" para agregar imagenes
                   productCreated     : false, //almacenara el id del producto creado, para pasarlo a la  arga de imagenes
                   products           : this.props.products, //productos a mostrar en la pestaña productos
                   productEdit        : null, //informacion del producto a editar
+									productDelete      : null, //informacion del producto a eliminar
                   pageFormEdit       : 'first', //formulario de edicion de
                   productEditing     : false, //id del producto en edicion
                   typeEdit           : "", //indicara el tipo de producto que se edito (como quedo despues de la edicion) sirve para el ajax que refresca el producto que se esta editando
@@ -75,6 +77,7 @@ class Ecommerce extends React.Component
 		this.submitForm      = this.submitForm.bind(this);
 		this.finishCreate    = this.finishCreate.bind(this);
 		this.showModalEdit   = this.showModalEdit.bind(this); //maneja el onCLick de los botones de editar, para mostrar el modal
+		this.showModalDelete = this.showModalDelete.bind(this);
 	  this.submitEdit      = this.submitEdit.bind(this); //maneja el onSubmit del formulario de editar
 	  this.finishUpdate    = this.finishUpdate.bind(this); //cambia el state pageFormEdit a firsdt
 	  this.filter          = this.filter.bind(this); //maneja el onChange de los filtros de productos
@@ -82,6 +85,7 @@ class Ecommerce extends React.Component
     this.onTagAdd        = this.onTagAdd.bind(this); //callback cuando se agrega un tag
     this.onTagDelete     = this.onTagDelete.bind(this); //callback que se ejecuta cuando se elimina un tag del input de tags
     this.showModalView   = this.showModalView.bind(this); //función que abre el modal para ver un proiducto en detalle
+		this.dellProduct     = this.dellProduct.bind(this);
 	}
 
 
@@ -247,6 +251,24 @@ class Ecommerce extends React.Component
 	  //abrir el modal
 	}
 
+	//muestra el modal de eliminar producto
+	showModalDelete(e){
+		e.preventDefault()
+
+		var id = e.target.getAttribute("data-id")
+		this.state.products.forEach( product => {
+			 if(product.id == id){
+				this.setState({productDelete:product}); //establecer el producto cliqueado para eliminar en el state productDelete
+			 }
+		})
+
+		console.log(`[deug] modal: ${document.getElementById('modalDeleteProduct')}`, document.getElementById('modalDeleteProduct'));
+
+		var instance = M.Modal.getInstance(document.getElementById('modalDeleteProduct'));
+		instance.open();
+		//abrir el modal
+	}
+
   /**
   *Muestra el modal donde se ve el produto
   */
@@ -292,7 +314,7 @@ class Ecommerce extends React.Component
 	//realiza una peticion ajax para cargar las categorias de una categoria padre
 	ajaxGetCategories(id){
 
-    this.categoryModel.setCategories(id, data=>{
+    this.categoryModel.getCategories(id, data=>{
       this.setState({optCategories:data,
                      optSubCatego:[]})
     })
@@ -391,6 +413,16 @@ class Ecommerce extends React.Component
 		})
 	}
 
+	//elimina un producto de la lista de Productos
+	dellProduct(id){
+		products = []
+		this.state.products.forEach( product =>{
+			if(product.id != id) products.push(product)
+		})
+
+		this.setState({products:products});
+	}
+
   componentDidMount(){
 
     this.fatherModel.getFatherCategories( data => {
@@ -456,7 +488,8 @@ class Ecommerce extends React.Component
                           <ProducPanel products={this.state.products}
                                        defaultImg={this.props.defaultImg}
                                        showModalEdit={this.showModalEdit}
-                                       showModalView={this.showModalView}/>
+                                       showModalView={this.showModalView}
+																			 showModalDelete={this.showModalDelete}/>
 
                           <div className="col m12 m-t">
                               <div className="col-md-4 col-md-offset-5">
@@ -504,9 +537,11 @@ class Ecommerce extends React.Component
                          onChipDelete={this.onTagDelete}
                          />
 
-                       {console.log(`[debug] props modal view: ${this.state.productDetail}`, this.state.productDetail)}
-            <ModalViewProduct product={this.state.productDetail}/>
 
+            <ModalViewProduct product={this.state.productDetail}/>
+						<ModalDelete product={this.state.productDelete}
+												 productModel={this.productModel}
+												 dellProduct={this.dellProduct}/>
   			   </div>)
 	}
 
@@ -516,6 +551,7 @@ class Ecommerce extends React.Component
 //Props: products       -> object    Productos a mostrar
 //       defaultImg     -> string    ruta de la imagen default
 //       showModalEdit  -> function
+//       showModalDelete -> funcion   muestra el modal de confirmar eliminar producto
 //       showModalView  -> funcion    muestra el modal de productos
 class ProducPanel extends React.Component
 {
@@ -530,6 +566,7 @@ class ProducPanel extends React.Component
                        defaultImg={this.props.defaultImg}
                        key={"content-product"+product.id}
                        showModalEdit={this.props.showModalEdit}
+											 showModalDelete={this.props.showModalDelete}
                        showModalView={this.props.showModalView}/>)
 
 			iteracion++;
@@ -562,6 +599,7 @@ class ProducPanel extends React.Component
 //props: product        -> object    Información del producto
 //       defaultImg     -> string    Ruta de la imagen default
 //       showModalEdit  -> function
+//       showModalDelete -> funcion  muetsra el model de confirmar eliminar producto
 //       showModalView  -> funcion   muestra el modal de detalles
 class Produt extends React.Component
 {
@@ -591,8 +629,8 @@ class Produt extends React.Component
                           ${helper.formatoNumero(this.props.product.price)}<br></br>
 
                           <div className="m-t text-righ">
-                              {/*<button className="btn btn-xs btn-outline btn-primary" data-id={this.props.product.id} onClick={this.props.showModalEdit}> <i className="material-icons">edit</i></button> */}
                               <a className="waves-effect waves-light btn modal-trigger" data-id={this.props.product.id} onClick={this.props.showModalEdit} href="#modalEditProduct"><i className="material-icons" data-id={this.props.product.id}>edit</i></a>
+															<a className="waves-effect waves-light btn modal-trigger red derken-1" data-id={this.props.product.id} onClick={this.props.showModalDelete} href="#modalDeleteProduct"><i className="material-icons" data-id={this.props.product.id}>delete</i></a>
                         </div>
                       </span>
                     </div>
@@ -1646,7 +1684,7 @@ class RowInputPic extends React.Component
 
 	/**
 	 * actualiza la barra de progreso de imagenes
-	 * @param {object} evt 
+	 * @param {object} evt
 	 */
 	updateBarProgress(evt){
 		var percent = (evt.loaded / evt.total) * 100;
@@ -1672,10 +1710,10 @@ class RowInputPic extends React.Component
 		document.getElementById("barProgress"+this.props.row).style.width = width;
 		helper.showMessage("error","Algo salió mal","La carga de la imagen falló")
 	}
-	
+
 	uploadImg(e){
 		e.preventDefault()
-		
+
 		if (typeof this.cropper.getCroppedCanvas() === 'undefined') {
 			console.log(`[debug] cropImage: no existe`)
       return;
@@ -1701,7 +1739,7 @@ class RowInputPic extends React.Component
 							}
 		})
 	}
-	
+
 	changeImage(e){
 		e.preventDefault()
 		let file = e.target.files;
@@ -1713,14 +1751,14 @@ class RowInputPic extends React.Component
     reader.onload = () => {
       this.setState({ src: reader.result });
 		};
-		
+
     reader.readAsDataURL(file[0]);
 	}
 
 	render(){
 			 return(
 				 			<div className="row">
-							 		<div className="col s12 m8"> 
+							 		<div className="col s12 m8">
 									 <Cropper ref={cropper => { this.cropper = cropper; }}
 														src={this.state.src}
 														style={{height: 400, width: '100%'}}
@@ -1744,14 +1782,14 @@ class RowInputPic extends React.Component
 															<input type="file" accept="image/*" name="file" id={"inputImage-"+this.props.row} ref={this.fileInput} className="hide" onChange={this.changeImage}/>
 															Selecionar imagen
 														</label>
-											
-													
+
+
 													<button className="btn btn-primary" id={"btnLoad-"+this.props.row} onClick={this.uploadImg}>Cargar <i className="fa fa-upload" aria-hidden="true"></i></button>
 											</div>
 											<div className="progress">
 												<div className="determinate" id={"barProgress"+this.props.row} style={startProgressBar}></div>
 											</div>
-									 </div>										
+									 </div>
 							</div>)
     }
 }
@@ -1846,6 +1884,51 @@ class ModalEdit extends React.Component
               <div className="modal-footer">
                 <button type="button" className="btn btn-default" data-dismiss="modal" onClick={this.closeModal}>Cancelar</button>
 				        {this.renderBtnFinish()}
+              </div>
+            </div>)
+	}
+}
+
+/**
+*Modal de confiermación para eliminar un producto
+* @param {object} product //producto a eliminar
+* @param {productModel} productModel //modelo para peticiones a productos
+* @param {function} dellProduct //quita el producto eliminada
+*/
+class ModalDelete extends React.Component{
+	constructor(props){
+		super(props)
+		this.closeModal = this.closeModal.bind(this)
+		this.deleteProduct = this.deleteProduct.bind(this)
+	}
+
+	closeModal(){
+    var instance = M.Modal.getInstance(document.getElementById('modalDeleteProduct'));
+    instance.close();
+  }
+
+	deleteProduct(){
+		var {productModel, product, dellProduct} = this.props;
+		productModel.desactivate(product.id)
+			.then(data => { if(data.deleted){
+												dellProduct(product.id)
+												this.closeModal();
+												helper.showMessage("info","Eliminado","Producto eliminado")
+										  }
+										})
+			.catch(console.error(`[DEBUG] error en la petición`));
+	}
+
+	render(){
+		return(<div id="modalDeleteProduct" className="modal">
+              <div className="mod-content">
+
+			        <h4 className="modal-title" id="exampleModaDelete">¿Eliminar {this.props.product != null ? this.props.product.name : ""}?</h4>
+
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-default" data-dismiss="modal" onClick={this.closeModal}>Cancelar</button>
+				        <button type="button" className="btn btn-default red darken-1" data-dismiss="modal" onClick={this.deleteProduct}>Eliminar</button>
               </div>
             </div>)
 	}

@@ -43,7 +43,7 @@ class ProductsController extends Controller
     //retorna los ultimos productos y accesorios creados
     public function getLastProducts()
     {
-        $products    = Shop_product::orderBy("created_at","desc")->take('20')->get(); //tomamos los ultimos 20 productos
+        $products    = Shop_product::where("deleted","no")->orderBy("created_at","desc")->take('20')->get(); //tomamos los ultimos 20 productos
         $products    = $this->formatProducts($products);
 
         if( count($products) > 20){
@@ -409,6 +409,7 @@ class ProductsController extends Controller
         $product->meta_description    = $request->metaDescripcionCrearProducto;
         $product->shop_brand_id       = $marca_id;
         $product->price               = $request->precioCrearProducto;
+        $product->user_id             = auth()->user()->id;
         $product->shop_subcategory_id = $subcategoria_id;
         $product->showproduct         = "no";
 
@@ -420,7 +421,7 @@ class ProductsController extends Controller
                     }
                 }
             }
-                
+
 
             if( $tags !== null ){  //adjuntamos los tags que creeo
                 foreach ($tags as $newTag) {
@@ -734,12 +735,12 @@ class ProductsController extends Controller
 
       $img        = $request->file('croppedImage');
       $nombreFoto = time().'-'.$this->sinCaracteresRaros($img->getClientOriginalName()).'.'.$img->getClientOriginalExtension();
-      Storage::disk('ecommerceProducts')->put($nombreFoto, file_get_contents($img->getRealPath() ) ); 
+      Storage::disk('ecommerceProducts')->put($nombreFoto, file_get_contents($img->getRealPath() ) );
 
       Storage::disk('ecommerceProducts')->delete($image->route);
 
       $image->route = $nombreFoto;
-      
+
       if( $image->save() ){
          $productUpdated = Shop_product::find($request->producto_id);
          $productUpdated->shop_tags;
@@ -917,6 +918,28 @@ class ProductsController extends Controller
 
 
       return response()->json(["father" => $products]);
+  }
+
+  /**
+  * Modifica el campo deleted de un producto en la base de datos, lo establece en "si"
+  * @param {Request} $request
+  */
+  public function delete(Request $request){
+    $message = "No fue posible eliminar el producto";
+    $deleted = false;
+    $product = Shop_product::find($request->id);
+    if($product){
+      $product->deleted = "si";
+      if($product->save()){
+        $message = "Eliminado";
+        $deleted = true;
+      }
+    }
+    else{
+      $message = "No se encontró en la base de datos";
+    }
+
+    return response()->json(["deleted" => $deleted, "message" => $message]);
   }
 
 
